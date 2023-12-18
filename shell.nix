@@ -1,7 +1,7 @@
 with import ./pkgs.nix {};
 
 stdenv.mkDerivation rec {
-  name = "asteroids-rust-env";
+  name = "ksp2d-rust-env";
   env = buildEnv { name = name; paths = buildInputs; };
 
   buildInputs = [

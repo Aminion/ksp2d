@@ -1,4 +1,3 @@
-#![feature(default_free_fn)]
 
 extern crate crossbeam;
 extern crate glam;
@@ -36,7 +35,7 @@ fn initialize<'a, 'b>() -> Result<(WindowCanvas, EventPump), String> {
         .build()
         .expect("could not make a canvas");
 
-    // Render first empty frame
+    // Render first empty framed
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
     canvas.present();
