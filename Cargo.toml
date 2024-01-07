@@ -5,8 +5,8 @@ authors = ["Aminion <aminion@protonmail.com>"]
 edition = "2018"
 
 [dependencies]
-glam = "^0.24.2"
-crossbeam = "^0.8.2"
+glam = "^0.25"
+crossbeam = "^0.8.3"
 rand = "^0.8.5"
 
 [dependencies.sdl2]
