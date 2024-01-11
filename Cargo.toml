@@ -6,13 +6,13 @@ edition = "2018"
 
 [dependencies]
 glam = "^0.25"
-crossbeam = "^0.8.3"
+crossbeam = "^0.8.4"
 rand = "^0.8.5"
 
 [dependencies.sdl2]
 version = "^0.36"
 default-features = false
-features = ["mixer"]
+features = ["mixer", "gfx"]
 
 [dependencies.legion]
 version = "^0.4.0"

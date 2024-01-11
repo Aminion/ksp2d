@@ -9,6 +9,7 @@ stdenv.mkDerivation rec {
     rustup
     SDL2
     SDL2_mixer
+    SDL2_gfx
     valgrind
     llvm_11
   ];

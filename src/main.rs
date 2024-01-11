@@ -5,10 +5,15 @@ extern crate legion;
 extern crate rand;
 extern crate sdl2;
 
+use sdl2::gfx::primitives::DrawRenderer;
+use sdl2::keyboard::Keycode;
 use sdl2::mixer::InitFlag;
 use sdl2::pixels::Color;
 use sdl2::render::WindowCanvas;
 use sdl2::EventPump;
+use sdl2::event::Event;
+use std::time::Duration;
+
 
 fn initialize<'a, 'b>() -> Result<(WindowCanvas, EventPump), String> {
     // Initialize libraries
@@ -38,14 +43,15 @@ fn initialize<'a, 'b>() -> Result<(WindowCanvas, EventPump), String> {
     // Render first empty framed
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
+    canvas.filled_ellipse(50, 50, 15, 35, Color::RGB(0, 0, 255));
     canvas.present();
 
-    let event_pump = sdl_context.event_pump()?;
-
+    let event_pump = sdl_context.event_pump().unwrap();
+    
     Ok((canvas, event_pump))
 }
 
 pub fn main() -> () {
-    let _ = initialize().unwrap();
+    let r = initialize().unwrap();
     loop {}
 }
