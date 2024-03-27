@@ -53,8 +53,7 @@ fn initialize<'a, 'b>() -> Result<(WindowCanvas, EventPump), String> {
 fn rotation_mtx(a: &f64) -> Array2<f64> {
     let sin_a = a.sin();
     let cos_a = a.cos();
-    let x = arr2(&[[cos_a, -sin_a], [sin_a, cos_a]]);
-    x
+    arr2(&[[cos_a, -sin_a], [sin_a, cos_a]])
 }
 
 pub fn main() -> () {

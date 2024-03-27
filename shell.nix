@@ -1,4 +1,3 @@
-
 with import ./pkgs.nix {};
 
 stdenv.mkDerivation rec {
@@ -11,6 +10,6 @@ stdenv.mkDerivation rec {
     SDL2_mixer
     SDL2_gfx
     valgrind
-    llvm_11
+    llvm_17
   ];
 }
