@@ -10,6 +10,6 @@ stdenv.mkDerivation rec {
     SDL2_mixer
     SDL2_gfx
     valgrind
-    llvm_17
+    llvm_18
   ];
 }
