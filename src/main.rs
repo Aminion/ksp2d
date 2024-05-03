@@ -19,6 +19,8 @@ use std::{
     time::{Duration, Instant},
 };
 
+use legion::*;
+
 fn initialize<'a, 'b>() -> Result<(WindowCanvas, EventPump), String> {
     // Initialize libraries
     let sdl_context = sdl2::init()?;
@@ -55,6 +57,16 @@ fn rotation_mtx(a: &f64) -> Array2<f64> {
     let cos_a = a.cos();
     arr2(&[[cos_a, -sin_a], [sin_a, cos_a]])
 }
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Position {
+    x: f64,
+    y: f64,
+}
+
+#[system(for_each)]
+fn update_positions(pos: &mut Position, #[resource] time: &Duration) {
+    println!("{:?}", time)
+}
 
 pub fn main() -> () {
     const ANGLE_SPD: f64 = std::f64::consts::PI;
@@ -65,6 +77,15 @@ pub fn main() -> () {
     let mut angle = 0f64;
     let mut offset_vec = arr1(&[600f64, 200f64]);
     let mut code_map: HashSet<Scancode> = HashSet::new();
+    let mut world = World::default();
+    let entity: Entity = world.push((Position {
+        x: 0.600f64,
+        y: 200f64,
+    },));
+
+    let mut schedule = Schedule::builder()
+        .add_system(update_positions_system())
+        .build();
     'running: loop {
         let dt = frame.elapsed();
         frame = Instant::now();
@@ -132,6 +153,9 @@ pub fn main() -> () {
         fn tran(c: &f64) -> i16 {
             c.round() as i16
         }
+        let mut res = Resources::default();
+        res.insert(dt);
+        schedule.execute(&mut world, &mut res);
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.clear();
         canvas.filled_trigon(pt0[0], pt0[1], pt1[0], pt1[1], pt2[0], pt2[1], COLOR);
