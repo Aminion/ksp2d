@@ -1,3 +1,5 @@
+pub mod ksp2d;
+
 extern crate crossbeam;
 extern crate glam;
 extern crate legion;
