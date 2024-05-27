@@ -12,7 +12,7 @@ use sdl2::keyboard::Keycode;
 use sdl2::mixer::InitFlag;
 use sdl2::pixels::Color;
 use sdl2::render::WindowCanvas;
-use sdl2::EventPump;
+use sdl2::{event, EventPump};
 use sdl2::{event::Event, keyboard::Scancode};
 use std::collections::HashSet;
 use std::{
@@ -22,6 +22,8 @@ use std::{
 };
 
 use legion::*;
+
+use crate::ksp2d::components::rocket::PlayerInput;
 
 fn initialize<'a, 'b>() -> Result<(WindowCanvas, EventPump), String> {
     // Initialize libraries
@@ -74,7 +76,7 @@ pub fn main() -> () {
     const ANGLE_SPD: f64 = std::f64::consts::PI;
     const LINEAR_SPD: f64 = 64f64;
     const COLOR: Color = Color::RGB(0, 255, 255);
-    let (mut canvas, mut e) = initialize().unwrap();
+    let (mut canvas, mut event_pump) = initialize().unwrap();
     let mut frame = Instant::now();
     let mut angle = 0f64;
     let mut offset_vec = arr1(&[600f64, 200f64]);
@@ -88,11 +90,14 @@ pub fn main() -> () {
     let mut schedule = Schedule::builder()
         .add_system(update_positions_system())
         .build();
-    'running: loop {
+    let mut resources = Resources::default();
+    let mut pinput = resources.get_mut::<HashSet<PlayerInput>>().unwrap();
+    'running: loop {   
         let dt = frame.elapsed();
         frame = Instant::now();
+        //resources.insert(dt);
         // println!("{:?}",e.poll_iter().count() );
-        for event in e.poll_iter() {
+        for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. }
                 | Event::KeyDown {
@@ -102,9 +107,27 @@ pub fn main() -> () {
                 Event::KeyDown {
                     scancode: Some(code),
                     ..
-                } => {
-                    code_map.insert(code);
-                }
+                } => match code {
+                    Scancode::A => {
+                        pinput.insert(PlayerInput::MoveLeft);
+                    },
+                    Scancode::D => {
+                        pinput.insert(PlayerInput::MoveRight);
+                    },
+                    Scancode::W => {
+                        pinput.insert(PlayerInput::MoveForward);
+                    },
+                    Scancode::S => {
+                        pinput.insert(PlayerInput::MoveBackward);
+                    },
+                    Scancode::Q => {
+                        pinput.insert(PlayerInput::RotateLeft);
+                    },
+                    Scancode::E => {
+                        pinput.insert(PlayerInput::RotateRight);
+                    },
+                    _ => (),
+                },
                 Event::KeyUp {
                     scancode: Some(code),
                     ..
@@ -155,9 +178,8 @@ pub fn main() -> () {
         fn tran(c: &f64) -> i16 {
             c.round() as i16
         }
-        let mut res = Resources::default();
-        res.insert(dt);
-        schedule.execute(&mut world, &mut res);
+
+        schedule.execute(&mut world, &mut resources);
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.clear();
         canvas.filled_trigon(pt0[0], pt0[1], pt1[0], pt1[1], pt2[0], pt2[1], COLOR);
