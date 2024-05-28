@@ -91,50 +91,53 @@ pub fn main() -> () {
         .add_system(update_positions_system())
         .build();
     let mut resources = Resources::default();
-    let mut pinput = resources.get_mut::<HashSet<PlayerInput>>().unwrap();
-    'running: loop {   
+
+    'running: loop {
         let dt = frame.elapsed();
         frame = Instant::now();
-        //resources.insert(dt);
+        resources.insert(dt);
         // println!("{:?}",e.poll_iter().count() );
-        for event in event_pump.poll_iter() {
-            match event {
-                Event::Quit { .. }
-                | Event::KeyDown {
-                    scancode: Some(Scancode::Escape),
-                    ..
-                } => break 'running,
-                Event::KeyDown {
-                    scancode: Some(code),
-                    ..
-                } => match code {
-                    Scancode::A => {
-                        pinput.insert(PlayerInput::MoveLeft);
+        {
+            let mut pinput = resources.get_mut::<HashSet<PlayerInput>>().unwrap();
+            for event in event_pump.poll_iter() {
+                match event {
+                    Event::Quit { .. }
+                    | Event::KeyDown {
+                        scancode: Some(Scancode::Escape),
+                        ..
+                    } => break 'running,
+                    Event::KeyDown {
+                        scancode: Some(code),
+                        ..
+                    } => match code {
+                        Scancode::A => {
+                            pinput.insert(PlayerInput::MoveLeft);
+                        }
+                        Scancode::D => {
+                            pinput.insert(PlayerInput::MoveRight);
+                        }
+                        Scancode::W => {
+                            pinput.insert(PlayerInput::MoveForward);
+                        }
+                        Scancode::S => {
+                            pinput.insert(PlayerInput::MoveBackward);
+                        }
+                        Scancode::Q => {
+                            pinput.insert(PlayerInput::RotateLeft);
+                        }
+                        Scancode::E => {
+                            pinput.insert(PlayerInput::RotateRight);
+                        }
+                        _ => (),
                     },
-                    Scancode::D => {
-                        pinput.insert(PlayerInput::MoveRight);
-                    },
-                    Scancode::W => {
-                        pinput.insert(PlayerInput::MoveForward);
-                    },
-                    Scancode::S => {
-                        pinput.insert(PlayerInput::MoveBackward);
-                    },
-                    Scancode::Q => {
-                        pinput.insert(PlayerInput::RotateLeft);
-                    },
-                    Scancode::E => {
-                        pinput.insert(PlayerInput::RotateRight);
-                    },
-                    _ => (),
-                },
-                Event::KeyUp {
-                    scancode: Some(code),
-                    ..
-                } => {
-                    code_map.remove(&code);
+                    Event::KeyUp {
+                        scancode: Some(code),
+                        ..
+                    } => {
+                        code_map.remove(&code);
+                    }
+                    _ => {}
                 }
-                _ => {}
             }
         }
 
