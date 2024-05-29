@@ -6,6 +6,7 @@ extern crate legion;
 extern crate rand;
 extern crate sdl2;
 
+use legion::world::SubWorld;
 use ndarray::{arr1, arr2, Array2};
 use sdl2::gfx::primitives::DrawRenderer;
 use sdl2::keyboard::Keycode;
@@ -65,6 +66,7 @@ fn rotation_mtx(a: &f64) -> Array2<f64> {
 struct Position {
     x: f64,
     y: f64,
+    a: f64,
 }
 
 #[system(for_each)]
@@ -72,10 +74,42 @@ fn update_positions(pos: &mut Position, #[resource] time: &Duration) {
     println!("{:?}", time)
 }
 
+const COLOR: Color = Color::RGB(0, 255, 255);
+
+#[system]
+#[read_component(Position)]
+fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
+    let mut position_query = <&Position>::query();
+    canvas.set_draw_color(Color::RGB(0, 0, 0));
+    canvas.clear();
+    fn tran(c: &f64) -> i16 {
+        c.round() as i16
+    }
+    for position in position_query.iter(world) {
+        let offset_vec = arr1(&[position.x, position.y]);
+        let r_mtx = rotation_mtx(&position.a);
+        let pt0 = r_mtx
+            .dot(&arr1(&[-25.0, 0.0]))
+            .map(tran)
+            .add(&offset_vec.map(tran));
+        let pt1 = r_mtx
+            .dot(&arr1(&[0.0, -43.3013]))
+            .map(tran)
+            .add(&offset_vec.map(tran));
+        let pt2 = r_mtx
+            .dot(&arr1(&[25.0, 0.0]))
+            .map(tran)
+            .add(&offset_vec.map(tran));
+        canvas.filled_trigon(pt0[0], pt0[1], pt1[0], pt1[1], pt2[0], pt2[1], COLOR);
+        canvas.line(pt2[0], pt2[1], pt0[0], pt0[1], Color::RGB(255, 0, 0));
+    }
+    canvas.present();
+}
+
 pub fn main() -> () {
     const ANGLE_SPD: f64 = std::f64::consts::PI;
     const LINEAR_SPD: f64 = 64f64;
-    const COLOR: Color = Color::RGB(0, 255, 255);
+
     let (mut canvas, mut event_pump) = initialize().unwrap();
     let mut frame = Instant::now();
     let mut angle = 0f64;
@@ -83,14 +117,20 @@ pub fn main() -> () {
     let mut code_map: HashSet<Scancode> = HashSet::new();
     let mut world = World::default();
     let entity: Entity = world.push((Position {
-        x: 0.600f64,
+        x: 600f64,
         y: 200f64,
+        a: 0f64,
     },));
+
+    let mut resources = Resources::default();
+    resources.insert(canvas);
+    resources.insert(HashSet::<PlayerInput>::new());
 
     let mut schedule = Schedule::builder()
         .add_system(update_positions_system())
+        .flush()
+        .add_thread_local(render_system())
         .build();
-    let mut resources = Resources::default();
 
     'running: loop {
         let dt = frame.elapsed();
@@ -166,27 +206,6 @@ pub fn main() -> () {
             offset_vec = offset_vec + v;
         }
 
-        let pt0 = r_mtx
-            .dot(&arr1(&[-25.0, 0.0]))
-            .map(tran)
-            .add(&offset_vec.map(tran));
-        let pt1 = r_mtx
-            .dot(&arr1(&[0.0, -43.3013]))
-            .map(tran)
-            .add(&offset_vec.map(tran));
-        let pt2 = r_mtx
-            .dot(&arr1(&[25.0, 0.0]))
-            .map(tran)
-            .add(&offset_vec.map(tran));
-        fn tran(c: &f64) -> i16 {
-            c.round() as i16
-        }
-
-        schedule.execute(&mut world, &mut resources);
-        canvas.set_draw_color(Color::RGB(0, 0, 0));
-        canvas.clear();
-        canvas.filled_trigon(pt0[0], pt0[1], pt1[0], pt1[1], pt2[0], pt2[1], COLOR);
-        canvas.line(pt2[0], pt2[1], pt0[0], pt0[1], Color::RGB(255, 0, 0));
-        canvas.present();
+        schedule.execute(&mut world, &mut resources)
     }
 }
