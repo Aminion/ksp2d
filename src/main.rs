@@ -70,8 +70,38 @@ struct Position {
 }
 
 #[system(for_each)]
-fn update_positions(pos: &mut Position, #[resource] time: &Duration) {
-    println!("{:?}", time)
+fn update_positions(
+    pos: &mut Position,
+    #[resource] dt: &Duration,
+    #[resource] input: &HashSet<PlayerInput>,
+) {
+    const ANGLE_SPD: f64 = std::f64::consts::PI;
+    const LINEAR_SPD: f64 = 64f64;
+   // print!("{:?}", input);
+    let r_mtx = rotation_mtx(&pos.a);
+    if input.contains(&PlayerInput::RotateRight) {
+        pos.a += ANGLE_SPD * dt.as_secs_f64();
+    } else if input.contains(&PlayerInput::RotateLeft) {
+        pos.a -= ANGLE_SPD * dt.as_secs_f64();
+    }
+    if input.contains(&PlayerInput::MoveRight) {
+        let d = LINEAR_SPD * dt.as_secs_f64();
+        let v = r_mtx.dot(&arr1(&[d, 0f64]));
+        pos.x = pos.x + v[0];
+    } else if input.contains(&PlayerInput::MoveLeft) {
+        let d = LINEAR_SPD * dt.as_secs_f64();
+        let v = r_mtx.dot(&arr1(&[-d, 0f64]));
+        pos.x = pos.x + v[0];
+    }
+    if input.contains(&PlayerInput::MoveForward) {
+        let d = LINEAR_SPD * dt.as_secs_f64();
+        let v = r_mtx.dot(&arr1(&[0f64, -d]));
+        pos.y = pos.y + v[1];
+    } else if input.contains(&PlayerInput::MoveBackward) {
+        let d = LINEAR_SPD * dt.as_secs_f64();
+        let v = r_mtx.dot(&arr1(&[0f64, d]));
+        pos.y = pos.y + v[1];
+    }
 }
 
 const COLOR: Color = Color::RGB(0, 255, 255);
@@ -107,21 +137,9 @@ fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
 }
 
 pub fn main() -> () {
-    const ANGLE_SPD: f64 = std::f64::consts::PI;
-    const LINEAR_SPD: f64 = 64f64;
-
-    let (mut canvas, mut event_pump) = initialize().unwrap();
+    let (canvas, mut event_pump) = initialize().unwrap();
     let mut frame = Instant::now();
-    let mut angle = 0f64;
-    let mut offset_vec = arr1(&[600f64, 200f64]);
-    let mut code_map: HashSet<Scancode> = HashSet::new();
     let mut world = World::default();
-    let entity: Entity = world.push((Position {
-        x: 600f64,
-        y: 200f64,
-        a: 0f64,
-    },));
-
     let mut resources = Resources::default();
     resources.insert(canvas);
     resources.insert(HashSet::<PlayerInput>::new());
@@ -136,7 +154,6 @@ pub fn main() -> () {
         let dt = frame.elapsed();
         frame = Instant::now();
         resources.insert(dt);
-        // println!("{:?}",e.poll_iter().count() );
         {
             let mut pinput = resources.get_mut::<HashSet<PlayerInput>>().unwrap();
             for event in event_pump.poll_iter() {
@@ -173,39 +190,31 @@ pub fn main() -> () {
                     Event::KeyUp {
                         scancode: Some(code),
                         ..
-                    } => {
-                        code_map.remove(&code);
-                    }
+                    } => match code {
+                        Scancode::A => {
+                            pinput.remove(&PlayerInput::MoveLeft);
+                        }
+                        Scancode::D => {
+                            pinput.remove(&PlayerInput::MoveRight);
+                        }
+                        Scancode::W => {
+                            pinput.remove(&PlayerInput::MoveForward);
+                        }
+                        Scancode::S => {
+                            pinput.remove(&PlayerInput::MoveBackward);
+                        }
+                        Scancode::Q => {
+                            pinput.remove(&PlayerInput::RotateLeft);
+                        }
+                        Scancode::E => {
+                            pinput.remove(&PlayerInput::RotateRight);
+                        }
+                        _ => (),
+                    },
                     _ => {}
                 }
             }
         }
-
-        let r_mtx = rotation_mtx(&angle);
-        if code_map.contains(&Scancode::E) {
-            angle += ANGLE_SPD * dt.as_secs_f64();
-        } else if code_map.contains(&Scancode::Q) {
-            angle -= ANGLE_SPD * dt.as_secs_f64();
-        }
-        if code_map.contains(&Scancode::D) {
-            let d = LINEAR_SPD * dt.as_secs_f64();
-            let v = r_mtx.dot(&arr1(&[d, 0f64]));
-            offset_vec = offset_vec + v;
-        } else if code_map.contains(&Scancode::A) {
-            let d = LINEAR_SPD * dt.as_secs_f64();
-            let v = r_mtx.dot(&arr1(&[-d, 0f64]));
-            offset_vec = offset_vec + v;
-        }
-        if code_map.contains(&Scancode::W) {
-            let d = LINEAR_SPD * dt.as_secs_f64();
-            let v = r_mtx.dot(&arr1(&[0f64, -d]));
-            offset_vec = offset_vec + v;
-        } else if code_map.contains(&Scancode::S) {
-            let d = LINEAR_SPD * dt.as_secs_f64();
-            let v = r_mtx.dot(&arr1(&[0f64, d]));
-            offset_vec = offset_vec + v;
-        }
-
         schedule.execute(&mut world, &mut resources)
     }
 }
