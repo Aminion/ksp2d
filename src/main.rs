@@ -6,6 +6,7 @@ extern crate legion;
 extern crate rand;
 extern crate sdl2;
 
+use glam::{DMat2, DVec2, Mat2};
 use legion::world::SubWorld;
 use log::{info, warn};
 use ndarray::{arr1, arr2, Array2};
@@ -85,25 +86,27 @@ fn update_positions(
     } else if input.contains(&PlayerInput::RotateLeft) {
         pos.a -= ANGLE_SPD * dt.as_secs_f64();
     }
-    let r_mtx = rotation_mtx(&pos.a);
+
+    let r_mtx = DMat2::from_angle(pos.a);
     let d = LINEAR_SPD * dt.as_secs_f64();
+
     if input.contains(&PlayerInput::MoveRight) {
-        let v = r_mtx.dot(&arr1(&[d, 0f64]));
-        pos.x += v[0];
-        pos.y += v[1];
+        let local = DVec2::new(d, 0f64);
+        pos.x += r_mtx.row(0).dot(local);
+        pos.y += r_mtx.row(1).dot(local);
     } else if input.contains(&PlayerInput::MoveLeft) {
-        let v = r_mtx.dot(&arr1(&[-d, 0f64]));
-        pos.x += v[0];
-        pos.y += v[1];
+        let local = DVec2::new(-d, 0f64);
+        pos.x += r_mtx.row(0).dot(local);
+        pos.y += r_mtx.row(1).dot(local);
     }
     if input.contains(&PlayerInput::MoveForward) {
-        let v = r_mtx.dot(&arr1(&[0f64, -d]));
-        pos.x += v[0];
-        pos.y += v[1];
+        let local = DVec2::new(0f64, -d);
+        pos.x += r_mtx.row(0).dot(local);
+        pos.y += r_mtx.row(1).dot(local);
     } else if input.contains(&PlayerInput::MoveBackward) {
-        let v = r_mtx.dot(&arr1(&[0f64, d]));
-        pos.x += v[0];
-        pos.y += v[1];
+        let local = DVec2::new(0f64, d);
+        pos.x += r_mtx.row(0).dot(local);
+        pos.y += r_mtx.row(1).dot(local);
     }
 }
 
@@ -112,7 +115,6 @@ const COLOR: Color = Color::RGB(0, 255, 255);
 #[system]
 #[read_component(Position)]
 fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
-    info!("render");
     let mut position_query = <&Position>::query();
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
@@ -162,6 +164,7 @@ pub fn main() -> () {
         .build();
     'running: loop {
         let dt = frame.elapsed();
+        //info!("FPS{}", 1.0f64 / dt.as_secs_f64());
         frame = Instant::now();
         resources.insert(dt);
         {
