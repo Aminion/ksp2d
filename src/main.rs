@@ -52,7 +52,7 @@ fn initialize<'a, 'b>() -> Result<(WindowCanvas, EventPump), String> {
     let canvas = window
         .into_canvas()
         .accelerated()
-        .present_vsync()
+        //  .present_vsync()
         .build()
         .expect("could not make a canvas");
     let event_pump = sdl_context.event_pump().unwrap();
@@ -67,8 +67,7 @@ fn rotation_mtx(a: &f64) -> Array2<f64> {
 }
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct Position {
-    x: f64,
-    y: f64,
+    p: DVec2,
     a: f64,
 }
 
@@ -81,32 +80,29 @@ fn update_positions(
     const ANGLE_SPD: f64 = std::f64::consts::PI;
     const LINEAR_SPD: f64 = 64f64;
 
+    let dt_s = dt.as_secs_f64();
+
     if input.contains(&PlayerInput::RotateRight) {
-        pos.a += ANGLE_SPD * dt.as_secs_f64();
+        pos.a += ANGLE_SPD * dt_s;
     } else if input.contains(&PlayerInput::RotateLeft) {
-        pos.a -= ANGLE_SPD * dt.as_secs_f64();
+        pos.a -= ANGLE_SPD * dt_s;
     }
 
     let r_mtx = DMat2::from_angle(pos.a);
-    let d = LINEAR_SPD * dt.as_secs_f64();
 
     if input.contains(&PlayerInput::MoveRight) {
-        let local = DVec2::new(d, 0f64);
-        pos.x += r_mtx.row(0).dot(local);
-        pos.y += r_mtx.row(1).dot(local);
+        let local = DVec2::new(LINEAR_SPD * dt_s, 0f64);
+        pos.p += DVec2::new(r_mtx.row(0).dot(local), r_mtx.row(1).dot(local));
     } else if input.contains(&PlayerInput::MoveLeft) {
-        let local = DVec2::new(-d, 0f64);
-        pos.x += r_mtx.row(0).dot(local);
-        pos.y += r_mtx.row(1).dot(local);
+        let local = DVec2::new(-LINEAR_SPD * dt_s, 0f64);
+        pos.p += DVec2::new(r_mtx.row(0).dot(local), r_mtx.row(1).dot(local));
     }
     if input.contains(&PlayerInput::MoveForward) {
-        let local = DVec2::new(0f64, -d);
-        pos.x += r_mtx.row(0).dot(local);
-        pos.y += r_mtx.row(1).dot(local);
+        let local = DVec2::new(0f64, -LINEAR_SPD * dt_s);
+        pos.p += DVec2::new(r_mtx.row(0).dot(local), r_mtx.row(1).dot(local));
     } else if input.contains(&PlayerInput::MoveBackward) {
-        let local = DVec2::new(0f64, d);
-        pos.x += r_mtx.row(0).dot(local);
-        pos.y += r_mtx.row(1).dot(local);
+        let local = DVec2::new(0f64, LINEAR_SPD * dt_s);
+        pos.p += DVec2::new(r_mtx.row(0).dot(local), r_mtx.row(1).dot(local));
     }
 }
 
@@ -118,26 +114,25 @@ fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
     let mut position_query = <&Position>::query();
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
-    fn tran(c: &f64) -> i16 {
+    fn tran(c: f64) -> i16 {
         c.round() as i16
     }
     for position in position_query.iter(world) {
-        let offset_vec = arr1(&[position.x, position.y]);
-        let r_mtx = rotation_mtx(&position.a);
-        let pt0 = r_mtx
-            .dot(&arr1(&[-25.0, 0.0]))
-            .map(tran)
-            .add(&offset_vec.map(tran));
-        let pt1 = r_mtx
-            .dot(&arr1(&[0.0, -43.3013]))
-            .map(tran)
-            .add(&offset_vec.map(tran));
-        let pt2 = r_mtx
-            .dot(&arr1(&[25.0, 0.0]))
-            .map(tran)
-            .add(&offset_vec.map(tran));
-        canvas.filled_trigon(pt0[0], pt0[1], pt1[0], pt1[1], pt2[0], pt2[1], COLOR);
-        canvas.line(pt2[0], pt2[1], pt0[0], pt0[1], Color::RGB(255, 0, 0));
+        let r_mtx = DMat2::from_angle(position.a);
+        let l0 = DVec2::new(-25.0, 0.0);
+        let p0x = tran(r_mtx.row(0).dot(l0) + position.p.x);
+        let p0y = tran(r_mtx.row(1).dot(l0) + position.p.y);
+
+        let l1 = DVec2::new(0.0, -43.3013);
+        let p1x = tran(r_mtx.row(0).dot(l1) + position.p.x);
+        let p1y = tran(r_mtx.row(1).dot(l1) + position.p.y);
+
+        let l2 = DVec2::new(25.0, 0.0);
+        let p2x = tran(r_mtx.row(0).dot(l2) + position.p.x);
+        let p2y = tran(r_mtx.row(1).dot(l2) + position.p.y);
+
+        canvas.filled_trigon(p0x, p0y, p1x, p1y, p2x, p2y, COLOR);
+        canvas.line(p2x, p2y, p0x, p0y, Color::RGB(255, 0, 0));
     }
     canvas.present();
 }
@@ -152,8 +147,7 @@ pub fn main() -> () {
     resources.insert(canvas);
     resources.insert(HashSet::<PlayerInput>::new());
     world.push((Position {
-        y: 200f64,
-        x: 200f64,
+        p: DVec2::new(200f64, 200f64),
         a: 0f64,
     },));
 
@@ -164,7 +158,7 @@ pub fn main() -> () {
         .build();
     'running: loop {
         let dt = frame.elapsed();
-        //info!("FPS{}", 1.0f64 / dt.as_secs_f64());
+        info!("FPS {}", 1.0f64 / dt.as_secs_f64());
         frame = Instant::now();
         resources.insert(dt);
         {
