@@ -7,6 +7,7 @@ extern crate rand;
 extern crate sdl2;
 
 use legion::world::SubWorld;
+use log::{info, warn};
 use ndarray::{arr1, arr2, Array2};
 use sdl2::gfx::primitives::DrawRenderer;
 use sdl2::keyboard::Keycode;
@@ -16,6 +17,7 @@ use sdl2::render::WindowCanvas;
 use sdl2::{event, EventPump};
 use sdl2::{event::Event, keyboard::Scancode};
 use std::collections::HashSet;
+use std::io::Write;
 use std::{
     f32::consts::PI,
     ops::Add,
@@ -77,30 +79,31 @@ fn update_positions(
 ) {
     const ANGLE_SPD: f64 = std::f64::consts::PI;
     const LINEAR_SPD: f64 = 64f64;
-   // print!("{:?}", input);
-    let r_mtx = rotation_mtx(&pos.a);
+
     if input.contains(&PlayerInput::RotateRight) {
         pos.a += ANGLE_SPD * dt.as_secs_f64();
     } else if input.contains(&PlayerInput::RotateLeft) {
         pos.a -= ANGLE_SPD * dt.as_secs_f64();
     }
+    let r_mtx = rotation_mtx(&pos.a);
+    let d = LINEAR_SPD * dt.as_secs_f64();
     if input.contains(&PlayerInput::MoveRight) {
-        let d = LINEAR_SPD * dt.as_secs_f64();
         let v = r_mtx.dot(&arr1(&[d, 0f64]));
-        pos.x = pos.x + v[0];
+        pos.x += v[0];
+        pos.y += v[1];
     } else if input.contains(&PlayerInput::MoveLeft) {
-        let d = LINEAR_SPD * dt.as_secs_f64();
         let v = r_mtx.dot(&arr1(&[-d, 0f64]));
-        pos.x = pos.x + v[0];
+        pos.x += v[0];
+        pos.y += v[1];
     }
     if input.contains(&PlayerInput::MoveForward) {
-        let d = LINEAR_SPD * dt.as_secs_f64();
         let v = r_mtx.dot(&arr1(&[0f64, -d]));
-        pos.y = pos.y + v[1];
+        pos.x += v[0];
+        pos.y += v[1];
     } else if input.contains(&PlayerInput::MoveBackward) {
-        let d = LINEAR_SPD * dt.as_secs_f64();
         let v = r_mtx.dot(&arr1(&[0f64, d]));
-        pos.y = pos.y + v[1];
+        pos.x += v[0];
+        pos.y += v[1];
     }
 }
 
@@ -109,6 +112,7 @@ const COLOR: Color = Color::RGB(0, 255, 255);
 #[system]
 #[read_component(Position)]
 fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
+    info!("render");
     let mut position_query = <&Position>::query();
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
@@ -137,19 +141,25 @@ fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
 }
 
 pub fn main() -> () {
+    std::env::set_var("RUST_LOG", "info");
+    env_logger::init();
     let (canvas, mut event_pump) = initialize().unwrap();
     let mut frame = Instant::now();
     let mut world = World::default();
     let mut resources = Resources::default();
     resources.insert(canvas);
     resources.insert(HashSet::<PlayerInput>::new());
+    world.push((Position {
+        y: 200f64,
+        x: 200f64,
+        a: 0f64,
+    },));
 
     let mut schedule = Schedule::builder()
         .add_system(update_positions_system())
         .flush()
         .add_thread_local(render_system())
         .build();
-
     'running: loop {
         let dt = frame.elapsed();
         frame = Instant::now();
@@ -215,6 +225,6 @@ pub fn main() -> () {
                 }
             }
         }
-        schedule.execute(&mut world, &mut resources)
+        schedule.execute(&mut world, &mut resources);
     }
 }
