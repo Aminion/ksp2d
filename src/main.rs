@@ -59,6 +59,11 @@ struct Position {
     a: f64,
 }
 
+#[inline(always)]
+fn rotate_vec_by_mtx(r_mtx: &DMat2, v: DVec2) -> DVec2 {
+    DVec2::new(r_mtx.row(0).dot(v), r_mtx.row(1).dot(v))
+}
+
 #[system(for_each)]
 fn update_positions(
     pos: &mut Position,
@@ -80,17 +85,17 @@ fn update_positions(
 
     if input.contains(&PlayerInput::MoveRight) {
         let local = DVec2::new(LINEAR_SPD * dt_s, 0f64);
-        pos.p += DVec2::new(r_mtx.row(0).dot(local), r_mtx.row(1).dot(local));
+        pos.p += rotate_vec_by_mtx(&r_mtx, local);
     } else if input.contains(&PlayerInput::MoveLeft) {
         let local = DVec2::new(-LINEAR_SPD * dt_s, 0f64);
-        pos.p += DVec2::new(r_mtx.row(0).dot(local), r_mtx.row(1).dot(local));
+        pos.p += rotate_vec_by_mtx(&r_mtx, local);
     }
     if input.contains(&PlayerInput::MoveForward) {
         let local = DVec2::new(0f64, -LINEAR_SPD * dt_s);
-        pos.p += DVec2::new(r_mtx.row(0).dot(local), r_mtx.row(1).dot(local));
+        pos.p += rotate_vec_by_mtx(&r_mtx, local);
     } else if input.contains(&PlayerInput::MoveBackward) {
         let local = DVec2::new(0f64, LINEAR_SPD * dt_s);
-        pos.p += DVec2::new(r_mtx.row(0).dot(local), r_mtx.row(1).dot(local));
+        pos.p += rotate_vec_by_mtx(&r_mtx, local);
     }
 }
 
@@ -102,25 +107,20 @@ fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
     let mut position_query = <&Position>::query();
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
-    fn tran(c: f64) -> i16 {
-        c.round() as i16
-    }
+
     for position in position_query.iter(world) {
         let r_mtx = DMat2::from_angle(position.a);
         let l0 = DVec2::new(-25.0, 0.0);
-        let p0x = tran(r_mtx.row(0).dot(l0) + position.p.x);
-        let p0y = tran(r_mtx.row(1).dot(l0) + position.p.y);
+        let p0 = (rotate_vec_by_mtx(&r_mtx, l0) + position.p).as_i16vec2();
 
         let l1 = DVec2::new(0.0, -43.3013);
-        let p1x = tran(r_mtx.row(0).dot(l1) + position.p.x);
-        let p1y = tran(r_mtx.row(1).dot(l1) + position.p.y);
+        let p1 = (rotate_vec_by_mtx(&r_mtx, l1) + position.p).as_i16vec2();
 
         let l2 = DVec2::new(25.0, 0.0);
-        let p2x = tran(r_mtx.row(0).dot(l2) + position.p.x);
-        let p2y = tran(r_mtx.row(1).dot(l2) + position.p.y);
+        let p2 = (rotate_vec_by_mtx(&r_mtx, l2) + position.p).as_i16vec2();
 
-        canvas.filled_trigon(p0x, p0y, p1x, p1y, p2x, p2y, COLOR);
-        canvas.line(p2x, p2y, p0x, p0y, Color::RGB(255, 0, 0));
+        canvas.filled_trigon(p0.x, p0.y, p1.x, p1.y, p2.x, p2.y, COLOR);
+        canvas.line(p2.x, p2.y, p0.x, p0.y, Color::RGB(255, 0, 0));
     }
     canvas.present();
 }
