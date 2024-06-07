@@ -6,24 +6,17 @@ extern crate legion;
 extern crate rand;
 extern crate sdl2;
 
-use glam::{DMat2, DVec2, Mat2};
+use glam::{DMat2, DVec2};
 use legion::world::SubWorld;
-use log::{info, warn};
-use ndarray::{arr1, arr2, Array2};
+use log::info;
 use sdl2::gfx::primitives::DrawRenderer;
-use sdl2::keyboard::Keycode;
 use sdl2::mixer::InitFlag;
 use sdl2::pixels::Color;
 use sdl2::render::WindowCanvas;
-use sdl2::{event, EventPump};
+use sdl2::EventPump;
 use sdl2::{event::Event, keyboard::Scancode};
 use std::collections::HashSet;
-use std::io::Write;
-use std::{
-    f32::consts::PI,
-    ops::Add,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 use legion::*;
 
@@ -60,11 +53,6 @@ fn initialize<'a, 'b>() -> Result<(WindowCanvas, EventPump), String> {
     Ok((canvas, event_pump))
 }
 
-fn rotation_mtx(a: &f64) -> Array2<f64> {
-    let sin_a = a.sin();
-    let cos_a = a.cos();
-    arr2(&[[cos_a, -sin_a], [sin_a, cos_a]])
-}
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct Position {
     p: DVec2,
