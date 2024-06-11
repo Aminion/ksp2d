@@ -6,23 +6,23 @@ extern crate legion;
 extern crate rand;
 extern crate sdl2;
 
-use glam::{DMat2, DVec2};
-use legion::world::SubWorld;
+use glam::DVec2;
+use ksp2d::components::rocket::Position;
+use ksp2d::systems::render::render_system;
+use ksp2d::systems::rocket::update_positions_system;
 use log::info;
-use sdl2::gfx::primitives::DrawRenderer;
 use sdl2::mixer::InitFlag;
-use sdl2::pixels::Color;
 use sdl2::render::WindowCanvas;
 use sdl2::EventPump;
 use sdl2::{event::Event, keyboard::Scancode};
 use std::collections::HashSet;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use legion::*;
 
 use crate::ksp2d::components::rocket::PlayerInput;
 
-fn initialize<'a, 'b>() -> Result<(WindowCanvas, EventPump), String> {
+fn initialize() -> Result<(WindowCanvas, EventPump), String> {
     // Initialize libraries
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
@@ -53,79 +53,7 @@ fn initialize<'a, 'b>() -> Result<(WindowCanvas, EventPump), String> {
     Ok((canvas, event_pump))
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-struct Position {
-    p: DVec2,
-    a: f64,
-}
-
-#[inline(always)]
-fn rotate_vec_by_mtx(r_mtx: &DMat2, v: DVec2) -> DVec2 {
-    DVec2::new(r_mtx.row(0).dot(v), r_mtx.row(1).dot(v))
-}
-
-#[system(for_each)]
-fn update_positions(
-    pos: &mut Position,
-    #[resource] dt: &Duration,
-    #[resource] input: &HashSet<PlayerInput>,
-) {
-    const ANGLE_SPD: f64 = std::f64::consts::PI;
-    const LINEAR_SPD: f64 = 64f64;
-
-    let dt_s = dt.as_secs_f64();
-
-    if input.contains(&PlayerInput::RotateRight) {
-        pos.a += ANGLE_SPD * dt_s;
-    } else if input.contains(&PlayerInput::RotateLeft) {
-        pos.a -= ANGLE_SPD * dt_s;
-    }
-
-    let r_mtx = DMat2::from_angle(pos.a);
-
-    if input.contains(&PlayerInput::MoveRight) {
-        let local = DVec2::new(LINEAR_SPD * dt_s, 0f64);
-        pos.p += rotate_vec_by_mtx(&r_mtx, local);
-    } else if input.contains(&PlayerInput::MoveLeft) {
-        let local = DVec2::new(-LINEAR_SPD * dt_s, 0f64);
-        pos.p += rotate_vec_by_mtx(&r_mtx, local);
-    }
-    if input.contains(&PlayerInput::MoveForward) {
-        let local = DVec2::new(0f64, -LINEAR_SPD * dt_s);
-        pos.p += rotate_vec_by_mtx(&r_mtx, local);
-    } else if input.contains(&PlayerInput::MoveBackward) {
-        let local = DVec2::new(0f64, LINEAR_SPD * dt_s);
-        pos.p += rotate_vec_by_mtx(&r_mtx, local);
-    }
-}
-
-const COLOR: Color = Color::RGB(0, 255, 255);
-
-#[system]
-#[read_component(Position)]
-fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
-    let mut position_query = <&Position>::query();
-    canvas.set_draw_color(Color::RGB(0, 0, 0));
-    canvas.clear();
-
-    for position in position_query.iter(world) {
-        let r_mtx = DMat2::from_angle(position.a);
-        let l0 = DVec2::new(-25.0, 0.0);
-        let p0 = (rotate_vec_by_mtx(&r_mtx, l0) + position.p).as_i16vec2();
-
-        let l1 = DVec2::new(0.0, -43.3013);
-        let p1 = (rotate_vec_by_mtx(&r_mtx, l1) + position.p).as_i16vec2();
-
-        let l2 = DVec2::new(25.0, 0.0);
-        let p2 = (rotate_vec_by_mtx(&r_mtx, l2) + position.p).as_i16vec2();
-
-        canvas.filled_trigon(p0.x, p0.y, p1.x, p1.y, p2.x, p2.y, COLOR);
-        canvas.line(p2.x, p2.y, p0.x, p0.y, Color::RGB(255, 0, 0));
-    }
-    canvas.present();
-}
-
-pub fn main() -> () {
+pub fn main() {
     std::env::set_var("RUST_LOG", "info");
     env_logger::init();
     let (canvas, mut event_pump) = initialize().unwrap();
