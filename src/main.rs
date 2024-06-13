@@ -22,6 +22,8 @@ use legion::*;
 
 use crate::ksp2d::components::rocket::PlayerInput;
 
+pub struct Dt(f64);
+
 fn initialize() -> Result<(WindowCanvas, EventPump), String> {
     // Initialize libraries
     let sdl_context = sdl2::init()?;
@@ -73,8 +75,8 @@ pub fn main() {
         .add_thread_local(render_system())
         .build();
     'running: loop {
-        let dt = frame.elapsed();
-        info!("FPS {}", 1.0f64 / dt.as_secs_f64());
+        let dt = Dt(frame.elapsed().as_secs_f64());
+        info!("FPS {}", 1.0f64 / dt.0);
         frame = Instant::now();
         resources.insert(dt);
         {
