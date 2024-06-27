@@ -1,7 +1,9 @@
 use glam::{DMat2, DVec2};
 use legion::{world::SubWorld, *};
+use log::info;
 use sdl2::{gfx::primitives::DrawRenderer, pixels::Color, render::WindowCanvas};
 
+use crate::ksp2d::collision::*;
 use crate::Position;
 
 #[inline(always)]
@@ -18,6 +20,9 @@ pub fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
 
+    const c: DVec2 = DVec2::new(500f64, 600f64);
+    const c_r: f64 = 10f64;
+
     for position in position_query.iter(world) {
         let r_mtx = DMat2::from_angle(position.a);
         let l0 = DVec2::new(-25.0, 0.0);
@@ -31,6 +36,11 @@ pub fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
 
         let _ = canvas.filled_trigon(p0.x, p0.y, p1.x, p1.y, p2.x, p2.y, COLOR);
         let _ = canvas.line(p2.x, p2.y, p0.x, p0.y, Color::RGB(255, 0, 0));
+        let _ = canvas.circle(500, 600, c_r as i16, Color::RGB(255, 0, 0));
+
+        let one = rotate_vec_by_mtx(&r_mtx, l2) + position.p;
+        let two = rotate_vec_by_mtx(&r_mtx, l0) + position.p;
+        info!("INTERSECTION {}", is_segment_intersect_circle(one, two, c, c_r));
     }
     canvas.present();
 }
