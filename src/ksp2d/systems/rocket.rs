@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use glam::{DMat2, DVec2};
+use glam::{dvec2, DMat2, DVec2};
 use legion::system;
 
 use crate::{ksp2d::components::rocket::PlayerInput, Dt, Position};
@@ -28,17 +28,17 @@ pub fn update_positions(
     let r_mtx = DMat2::from_angle(pos.a);
 
     if input.contains(&PlayerInput::MoveRight) {
-        let local = DVec2::new(LINEAR_SPD * dt.0, 0f64);
+        let local = dvec2(LINEAR_SPD * dt.0, 0f64);
         pos.p += rotate_vec_by_mtx(&r_mtx, local);
     } else if input.contains(&PlayerInput::MoveLeft) {
-        let local = DVec2::new(-LINEAR_SPD * dt.0, 0f64);
+        let local = dvec2(-LINEAR_SPD * dt.0, 0f64);
         pos.p += rotate_vec_by_mtx(&r_mtx, local);
     }
     if input.contains(&PlayerInput::MoveForward) {
-        let local = DVec2::new(0f64, -LINEAR_SPD * dt.0);
+        let local = dvec2(0f64, -LINEAR_SPD * dt.0);
         pos.p += rotate_vec_by_mtx(&r_mtx, local);
     } else if input.contains(&PlayerInput::MoveBackward) {
-        let local = DVec2::new(0f64, LINEAR_SPD * dt.0);
+        let local = dvec2(0f64, LINEAR_SPD * dt.0);
         pos.p += rotate_vec_by_mtx(&r_mtx, local);
     }
 }

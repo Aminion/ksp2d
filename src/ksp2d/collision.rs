@@ -20,8 +20,28 @@ pub fn is_aabb_intersected(a_lt: DVec2, a_rb: DVec2, b_lt: DVec2, b_rb: DVec2) -
     rb_from(a_rb, b_lt) && rb_from(b_rb, a_lt)
 }
 
+pub fn is_point_in_circle(p: DVec2, c_center: DVec2, c_radius: f64) -> bool {
+    p.distance(c_center) <= c_radius
+}
+
+pub fn is_segment_intersects_circle(
+    seg_p1: DVec2,
+    seg_p2: DVec2,
+    c_center: DVec2,
+    c_radius: f64,
+) -> bool {
+    is_point_in_circle(seg_p1, c_center, c_radius)
+        || is_point_in_circle(seg_p2, c_center, c_radius)
+        || is_segment_intersects_circle_perp_method(seg_p1, seg_p2, c_center, c_radius)
+}
+
 //true iff segment intersect circle in two points
-pub fn is_segment_(seg_p1: DVec2, seg_p2: DVec2, c_center: DVec2, c_radius: f64) -> bool {
+pub fn is_segment_intersects_circle_perp_method(
+    seg_p1: DVec2,
+    seg_p2: DVec2,
+    c_center: DVec2,
+    c_radius: f64,
+) -> bool {
     //squared length of segment
     let len = seg_p1.distance_squared(seg_p2);
     //dot product to form closest perpendicular intersection point with line on which segment lies

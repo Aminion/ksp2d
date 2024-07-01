@@ -74,8 +74,8 @@ pub fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
 
         let one = rotate_vec_by_mtx(&r_mtx, L2) + position.p;
         let two = rotate_vec_by_mtx(&r_mtx, L0) + position.p;
-        info!("INTERSECTION {}", is_segment_(one, two, C, C_R));
         info!("AABB {}", is_aabb_intersected(aa, bb, c1, c2));
+        info!("INTERSECTION {}", is_segment_intersects_circle(one, two, C, C_R));
     }
     canvas.present();
 }
