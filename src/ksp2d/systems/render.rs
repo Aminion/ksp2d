@@ -6,6 +6,35 @@ use sdl2::{gfx::primitives::DrawRenderer, pixels::Color, render::WindowCanvas};
 use crate::ksp2d::collision::*;
 use crate::Position;
 
+const G: f64 = physical_constants::NEWTONIAN_CONSTANT_OF_GRAVITATION;
+#[derive(Copy, Clone)]
+struct Obj {
+    pos: DVec2,
+    vel: DVec2,
+    mass: DVec2,
+}
+
+fn n_body_iter(objs: &mut Vec<Obj>, dt: f64) {
+    for i in 0..objs.len() {
+        for j in 0..objs.len() {
+            if i == j {
+                continue;
+            }
+            let mut body_i = objs[i].clone();
+            let mut body_j = objs[j].clone();
+            let f = G * ((body_i.mass * body_j.mass) / body_i.pos.distance(body_j.pos));
+
+            body_i.vel += f * dt / body_i.mass;
+            body_i.pos += body_i.vel * dt;
+            objs[i] = body_i;
+
+            body_j.vel += f * dt / body_j.mass;
+            body_j.pos += body_j.vel * dt;
+            objs[j] = body_j;
+        }
+    }
+}
+
 #[inline(always)]
 fn rotate_vec_by_mtx(r_mtx: &DMat2, v: DVec2) -> DVec2 {
     DVec2::new(r_mtx.row(0).dot(v), r_mtx.row(1).dot(v))
@@ -25,7 +54,6 @@ pub fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
 
     for position in position_query.iter(world) {
         let r_mtx = DMat2::from_angle(position.a);
-
         const L0: DVec2 = dvec2(-25.0, 0.0);
         let l0_t = rotate_vec_by_mtx(&r_mtx, L0) + position.p;
         let p0_i16 = l0_t.as_i16vec2();
@@ -61,7 +89,7 @@ pub fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
             Color::RGB(255, 0, 0),
         );
 
-        let (c1,c2) = circle_aabb(C,C_R);
+        let (c1, c2) = circle_aabb(C, C_R);
         let c1_i16 = c1.as_i16vec2();
         let c2_i16 = c2.as_i16vec2();
         let _ = canvas.rectangle(
@@ -75,7 +103,10 @@ pub fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
         let one = rotate_vec_by_mtx(&r_mtx, L2) + position.p;
         let two = rotate_vec_by_mtx(&r_mtx, L0) + position.p;
         info!("AABB {}", is_aabb_intersected(aa, bb, c1, c2));
-        info!("INTERSECTION {}", is_segment_intersects_circle(one, two, C, C_R));
+        info!(
+            "INTERSECTION {}",
+            is_segment_intersects_circle(one, two, C, C_R)
+        );
     }
     canvas.present();
 }
