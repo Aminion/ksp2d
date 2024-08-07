@@ -6,34 +6,9 @@ use sdl2::{gfx::primitives::DrawRenderer, pixels::Color, render::WindowCanvas};
 use crate::ksp2d::collision::*;
 use crate::Position;
 
-const G: f64 = physical_constants::NEWTONIAN_CONSTANT_OF_GRAVITATION;
-#[derive(Copy, Clone)]
-struct Obj {
-    pos: DVec2,
-    vel: DVec2,
-    mass: DVec2,
-}
 
-fn n_body_iter(objs: &mut Vec<Obj>, dt: f64) {
-    for i in 0..objs.len() {
-        for j in 0..objs.len() {
-            if i == j {
-                continue;
-            }
-            let mut body_i = objs[i].clone();
-            let mut body_j = objs[j].clone();
-            let f = G * ((body_i.mass * body_j.mass) / body_i.pos.distance(body_j.pos));
 
-            body_i.vel += f * dt / body_i.mass;
-            body_i.pos += body_i.vel * dt;
-            objs[i] = body_i;
 
-            body_j.vel += f * dt / body_j.mass;
-            body_j.pos += body_j.vel * dt;
-            objs[j] = body_j;
-        }
-    }
-}
 
 #[inline(always)]
 fn rotate_vec_by_mtx(r_mtx: &DMat2, v: DVec2) -> DVec2 {
@@ -107,6 +82,9 @@ pub fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
             "INTERSECTION {}",
             is_segment_intersects_circle(one, two, C, C_R)
         );
+
+
+
     }
     canvas.present();
 }
