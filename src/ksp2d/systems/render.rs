@@ -4,11 +4,8 @@ use log::info;
 use sdl2::{gfx::primitives::DrawRenderer, pixels::Color, render::WindowCanvas};
 
 use crate::ksp2d::collision::*;
+use crate::ksp2d::components::celestial_body::Obj;
 use crate::Position;
-
-
-
-
 
 #[inline(always)]
 fn rotate_vec_by_mtx(r_mtx: &DMat2, v: DVec2) -> DVec2 {
@@ -19,6 +16,7 @@ const COLOR: Color = Color::RGB(0, 255, 255);
 
 #[system]
 #[read_component(Position)]
+#[read_component(Obj)]
 pub fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
     let mut position_query = <&Position>::query();
     canvas.set_draw_color(Color::RGB(0, 0, 0));
@@ -82,9 +80,11 @@ pub fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
             "INTERSECTION {}",
             is_segment_intersects_circle(one, two, C, C_R)
         );
-
-
-
+    }
+    let mut obj_query = <&Obj>::query();
+    for o in obj_query.iter(world) {
+        let s = (o.pos * 1.7112543e-9).as_i16vec2();
+        let _ = canvas.pixel(100 + s.x, 100 + s.y, Color::RGB(0, 255, 0));
     }
     canvas.present();
 }
