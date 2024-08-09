@@ -20,7 +20,7 @@ const COLOR: Color = Color::RGB(0, 255, 255);
 pub fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
     let mut position_query = <&Position>::query();
     canvas.set_draw_color(Color::RGB(0, 0, 0));
-    canvas.clear();
+    //canvas.clear();
 
     const C: DVec2 = dvec2(500f64, 600f64);
     const C_R: f64 = 100f64;

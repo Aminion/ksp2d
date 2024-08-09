@@ -5,13 +5,10 @@ use log::info;
 use crate::{ksp2d::components::celestial_body::Obj, Dt};
 
 #[system]
-#[read_component(Obj)]
+#[write_component(Obj)]
 pub fn celestial_body(world: &mut SubWorld, #[resource] dt: &Dt) {
-    info!("LLLLLLLLLLLLL");
     let mut query = <&mut Obj>::query();
-    info!("LLLLLLLLLLLLL");
     let mut r: Vec<&mut Obj> = query.iter_mut(world).collect();
-    info!("LLLLLLLLLLLLL");
     n_body_iter(&mut r, dt.0)
 }
 
@@ -33,8 +30,9 @@ fn n_body_iter(objs: &mut Vec<&mut Obj>, dt: f64) {
     }
 
     for o in objs.iter_mut() {
-        o.vel += o.acc * dt;
-        o.pos += o.vel * dt;
+        let next_pos = 2.0 * o.pos - o.prev_pos + o.acc * dt.exp2();
+        o.prev_pos = o.pos;
+        o.pos = next_pos;
     }
 }
 
