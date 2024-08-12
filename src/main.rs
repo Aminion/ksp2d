@@ -31,19 +31,14 @@ use crate::ksp2d::components::rocket::PlayerInput;
 pub struct Dt(f64);
 
 fn initialize() -> Result<(WindowCanvas, EventPump), String> {
-    // Initialize libraries
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
     let _audio = sdl_context.audio()?;
 
     let _mixer_context =
         sdl2::mixer::init(InitFlag::MP3 | InitFlag::FLAC | InitFlag::MOD | InitFlag::OGG)?;
-
-    // Number of mixing channels available for sound effect `Chunk`s to play
-    // simultaneously.
     sdl2::mixer::allocate_channels(20);
 
-    // Initialize window systems
     let window = video_subsystem
         .window("KSP 2D", 1280, 720)
         .position_centered()
@@ -53,7 +48,7 @@ fn initialize() -> Result<(WindowCanvas, EventPump), String> {
     let canvas = window
         .into_canvas()
         .accelerated()
-        .present_vsync()
+        //.present_vsync()
         .build()
         .expect("could not make a canvas");
     let event_pump = sdl_context.event_pump().unwrap();
@@ -111,8 +106,7 @@ pub fn main() {
 
     'running: loop {
         let dt = Dt(frame.elapsed().as_secs_f64());
-        let dtt = dt.0;
-        info!("FPS {}", 1.0f64 / dt.0);
+        info!("FPS {}", dt.0.recip());
         frame = Instant::now();
         resources.insert(dt);
         {

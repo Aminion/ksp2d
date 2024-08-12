@@ -22,9 +22,6 @@ pub fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     //canvas.clear();
 
-    const C: DVec2 = dvec2(500f64, 600f64);
-    const C_R: f64 = 100f64;
-
     for position in position_query.iter(world) {
         let r_mtx = DMat2::from_angle(position.a);
         const L0: DVec2 = dvec2(-25.0, 0.0);
@@ -49,38 +46,8 @@ pub fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
             p0_i16.y,
             Color::RGB(255, 0, 0),
         );
-        let _ = canvas.circle(500, 600, C_R as i16, Color::RGB(255, 0, 0));
-
-        let (aa, bb) = triangle_aabb(l0_t, l1_t, l2_t);
-        let aa_i16 = aa.as_i16vec2();
-        let bb_i16 = bb.as_i16vec2();
-        let _ = canvas.rectangle(
-            aa_i16.x,
-            aa_i16.y,
-            bb_i16.x,
-            bb_i16.y,
-            Color::RGB(255, 0, 0),
-        );
-
-        let (c1, c2) = circle_aabb(C, C_R);
-        let c1_i16 = c1.as_i16vec2();
-        let c2_i16 = c2.as_i16vec2();
-        let _ = canvas.rectangle(
-            c1_i16.x,
-            c1_i16.y,
-            c2_i16.x,
-            c2_i16.y,
-            Color::RGB(255, 0, 0),
-        );
-
-        let one = rotate_vec_by_mtx(&r_mtx, L2) + position.p;
-        let two = rotate_vec_by_mtx(&r_mtx, L0) + position.p;
-        info!("AABB {}", is_aabb_intersected(aa, bb, c1, c2));
-        info!(
-            "INTERSECTION {}",
-            is_segment_intersects_circle(one, two, C, C_R)
-        );
     }
+
     let mut obj_query = <&Obj>::query();
     for o in obj_query.iter(world) {
         let s = (o.pos * 1.7112543e-9).as_i16vec2();
