@@ -32,7 +32,9 @@ fn n_body_iter(objs: &mut Vec<&mut Obj>, dt: f64) {
     for o in objs.iter_mut() {
         let next_pos = 2.0 * o.pos - o.prev_pos + o.acc * dt.exp2();
         o.prev_pos = o.pos;
-        o.pos = next_pos;
+
+        o.pos += o.acc * dt.exp2();
+        info!("{} {}", o.pos, next_pos)
     }
 }
 

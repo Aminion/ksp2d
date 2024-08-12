@@ -53,7 +53,7 @@ fn initialize() -> Result<(WindowCanvas, EventPump), String> {
     let canvas = window
         .into_canvas()
         .accelerated()
-        //.present_vsync()
+        .present_vsync()
         .build()
         .expect("could not make a canvas");
     let event_pump = sdl_context.event_pump().unwrap();

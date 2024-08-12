@@ -2,6 +2,6 @@
 import ((import <nixpkgs> {}).fetchFromGitHub {
   owner = "NixOS";
   repo = "nixpkgs";
-  rev = "3a6785efdb7b7412208e356b4064278aff90c6e2";
-  sha256  = "sha256-bZYIRki8ElGw3hbc6t7VG3GiCpVYYNUVBDiW1fPjbck=";
+  rev = "2e11a22606820ece544b1b7f14de9ae32392ef9a";
+  sha256  = "sha256-GHu351+l1CTw/tiqn6OlRs9I5vEakZvcjXGLidmPWPE=";
 })
