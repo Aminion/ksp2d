@@ -1,8 +1,9 @@
 use glam::{dvec2, DMat2, DVec2};
 use legion::{world::SubWorld, *};
+use log::info;
 use sdl2::{gfx::primitives::DrawRenderer, pixels::Color, render::WindowCanvas};
 
-use crate::ksp2d::components::celestial_body::Obj;
+use crate::{ksp2d::components::celestial_body::Obj, SpaceScale};
 use crate::Position;
 
 #[inline(always)]
@@ -15,7 +16,7 @@ const COLOR: Color = Color::RGB(0, 255, 255);
 #[system]
 #[read_component(Position)]
 #[read_component(Obj)]
-pub fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
+pub fn render(#[resource] canvas: &mut WindowCanvas, #[resource] scale: &SpaceScale, world: &SubWorld) {
     let mut position_query = <&Position>::query();
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     //canvas.clear();
@@ -48,7 +49,7 @@ pub fn render(#[resource] canvas: &mut WindowCanvas, world: &SubWorld) {
 
     let mut obj_query = <&Obj>::query();
     for o in obj_query.iter(world) {
-        let s = (o.pos * 1.7112543e-9).as_i16vec2();
+        let s = (o.pos * scale.0).as_i16vec2();
         let _ = canvas.pixel(100 + s.x, 100 + s.y, Color::RGB(0, 255, 0));
     }
     canvas.present();

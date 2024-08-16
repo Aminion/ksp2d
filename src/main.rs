@@ -14,6 +14,7 @@ use ksp2d::systems::celestial_body::celestial_body_system;
 use ksp2d::systems::render::render_system;
 use ksp2d::systems::rocket::update_positions_system;
 use log::info;
+use sdl2::event::WindowEvent;
 use sdl2::mixer::InitFlag;
 use sdl2::render::WindowCanvas;
 use sdl2::EventPump;
@@ -26,6 +27,9 @@ use legion::*;
 use crate::ksp2d::components::rocket::PlayerInput;
 
 pub struct Dt(f64);
+pub struct SpaceScale(f64);
+
+const SpaceSize: f64 = 4.5029e+12 * 2.0;
 
 fn initialize() -> Result<(WindowCanvas, EventPump), String> {
     let sdl_context = sdl2::init()?;
@@ -38,6 +42,7 @@ fn initialize() -> Result<(WindowCanvas, EventPump), String> {
 
     let window = video_subsystem
         .window("KSP 2D", 1280, 720)
+        .resizable()
         .position_centered()
         .build()
         .expect("could not initialize video subsystem");
@@ -63,6 +68,7 @@ pub fn main() {
     let mut resources = Resources::default();
     resources.insert(canvas);
     resources.insert(HashSet::<PlayerInput>::new());
+    resources.insert(SpaceScale(1280.0 / SpaceSize));
     world.push((Position {
         p: DVec2::new(200f64, 200f64),
         a: 0f64,
@@ -163,6 +169,13 @@ pub fn main() {
                         }
                         _ => (),
                     },
+                    Event::Window {
+                        win_event: WindowEvent::SizeChanged(x, y),
+                        ..
+                    } => {
+                        let mut r = resources.get_mut::<SpaceScale>().unwrap();
+                        r.0 = x.max(y) as f64 / SpaceSize;
+                    }
                     _ => {}
                 }
             }

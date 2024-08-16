@@ -14,4 +14,5 @@ pub enum PlayerInput {
     MoveBackward,
     RotateLeft,
     RotateRight,
+    WindowResize(i32, i32),
 }
