@@ -1,5 +1,4 @@
 use glam::{dvec2, DVec2};
-use log::info;
 
 pub fn triangle_aabb(p1: DVec2, p2: DVec2, p3: DVec2) -> (DVec2, DVec2) {
     (

@@ -7,17 +7,14 @@ extern crate rand;
 extern crate sdl2;
 
 use core::f64;
-use glam::{dvec2, vec2, DVec2, Vec2};
+use glam::{dvec2, DVec2};
 use ksp2d::components::celestial_body::Obj;
 use ksp2d::components::rocket::Position;
-use ksp2d::systems::celestial_body;
 use ksp2d::systems::celestial_body::celestial_body_system;
 use ksp2d::systems::render::render_system;
 use ksp2d::systems::rocket::update_positions_system;
 use log::info;
-use sdl2::gfx::primitives::DrawRenderer;
 use sdl2::mixer::InitFlag;
-use sdl2::pixels::Color;
 use sdl2::render::WindowCanvas;
 use sdl2::EventPump;
 use sdl2::{event::Event, keyboard::Scancode};
@@ -48,7 +45,7 @@ fn initialize() -> Result<(WindowCanvas, EventPump), String> {
     let canvas = window
         .into_canvas()
         .accelerated()
-        //.present_vsync()
+        .present_vsync()
         .build()
         .expect("could not make a canvas");
     let event_pump = sdl_context.event_pump().unwrap();

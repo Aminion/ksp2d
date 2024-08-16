@@ -1,9 +1,7 @@
 use glam::{dvec2, DMat2, DVec2};
 use legion::{world::SubWorld, *};
-use log::info;
 use sdl2::{gfx::primitives::DrawRenderer, pixels::Color, render::WindowCanvas};
 
-use crate::ksp2d::collision::*;
 use crate::ksp2d::components::celestial_body::Obj;
 use crate::Position;
 
