@@ -8,8 +8,8 @@ extern crate sdl2;
 
 use core::f64;
 use glam::{dvec2, DVec2};
-use ksp2d::components::celestial_body::Obj;
-use ksp2d::components::rocket::Position;
+use ksp2d::components::celestial_body::CelestialBody;
+use ksp2d::components::rocket::Rocket;
 use ksp2d::systems::celestial_body::celestial_body_system;
 use ksp2d::systems::render::render_system;
 use ksp2d::systems::rocket::update_positions_system;
@@ -29,7 +29,7 @@ use crate::ksp2d::components::rocket::PlayerInput;
 pub struct Dt(f64);
 pub struct SpaceScale(f64);
 
-const SpaceSize: f64 = 4.5029e+12 * 2.0;
+const SPACE_SIZE: f64 = 4.5029e+12 / 8.0;
 
 fn initialize() -> Result<(WindowCanvas, EventPump), String> {
     let sdl_context = sdl2::init()?;
@@ -68,10 +68,21 @@ pub fn main() {
     let mut resources = Resources::default();
     resources.insert(canvas);
     resources.insert(HashSet::<PlayerInput>::new());
-    resources.insert(SpaceScale(1280.0 / SpaceSize));
-    world.push((Position {
-        p: DVec2::new(200f64, 200f64),
+    resources.insert(SpaceScale(1280.0 / SPACE_SIZE));
+
+    let rocket = CelestialBody {
+        mass: 2965000.0,
+        pos: dvec2(149597870700.0 / 4.0, 149597870700.0),
+        prev_pos: dvec2(149597870700.0 / 4.0, 149597870700.0),
+        vel: dvec2(-0.0, 0.0),
+        acc: dvec2(0.0, 0.0),
+    };
+
+    let rocket_e = world.push((rocket, ));
+
+    world.push((Rocket {
         a: 0f64,
+        celestial_body: rocket_e,
     },));
 
     let mut schedule = Schedule::builder()
@@ -81,7 +92,7 @@ pub fn main() {
         .add_thread_local(render_system())
         .build();
 
-    let pl1 = Obj {
+    let pl1 = CelestialBody {
         mass: 5.9722e24,
         pos: dvec2(149597870700.0, 0.0),
         prev_pos: dvec2(149597870700.0, 0.0),
@@ -89,7 +100,7 @@ pub fn main() {
         acc: dvec2(0.0, 0.0),
     };
 
-    let pl2 = Obj {
+    let pl2 = CelestialBody {
         mass: 1.9884e30,
         pos: dvec2(149597870700.0 * 2.0, 149597870700.0),
         prev_pos: dvec2(149597870700.0 * 2.0, 149597870700.0),
@@ -97,15 +108,9 @@ pub fn main() {
         acc: dvec2(0.0, 0.0),
     };
 
-    let pl3 = Obj {
-        mass: 6.39e23,
-        pos: dvec2(149597870700.0 / 4.0, 149597870700.0),
-        prev_pos: dvec2(149597870700.0 / 4.0, 149597870700.0),
-        vel: dvec2(-0.0, 0.0),
-        acc: dvec2(0.0, 0.0),
-    };
+    world.extend(vec![(pl1,), (pl2,)]);
 
-    world.extend(vec![(pl1,), (pl2,), (pl3,)]);
+
 
     'running: loop {
         let dt = Dt(frame.elapsed().as_secs_f64());
@@ -174,7 +179,7 @@ pub fn main() {
                         ..
                     } => {
                         let mut r = resources.get_mut::<SpaceScale>().unwrap();
-                        r.0 = x.max(y) as f64 / SpaceSize;
+                        r.0 = x.max(y) as f64 / SPACE_SIZE;
                     }
                     _ => {}
                 }

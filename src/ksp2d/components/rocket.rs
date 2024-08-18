@@ -1,9 +1,10 @@
 use glam::DVec2;
+use legion::Entity;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Position {
-    pub p: DVec2,
+pub struct Rocket {
     pub a: f64,
+    pub celestial_body: Entity,
 }
 
 #[derive(PartialEq, Eq, Hash, Debug)]

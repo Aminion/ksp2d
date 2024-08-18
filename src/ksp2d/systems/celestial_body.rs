@@ -1,19 +1,19 @@
 use glam::dvec2;
 use legion::{world::SubWorld, *};
 
-use crate::{ksp2d::components::celestial_body::Obj, Dt};
+use crate::{ksp2d::components::celestial_body::CelestialBody, Dt};
 
 const G: f64 = physical_constants::NEWTONIAN_CONSTANT_OF_GRAVITATION;
 
 #[system]
-#[write_component(Obj)]
+#[write_component(CelestialBody)]
 pub fn celestial_body(world: &mut SubWorld, #[resource] dt: &Dt) {
-    let mut query = <&mut Obj>::query();
-    let mut r: Vec<&mut Obj> = query.iter_mut(world).collect();
+    let mut query = <&mut CelestialBody>::query();
+    let mut r: Vec<&mut CelestialBody> = query.iter_mut(world).collect();
     n_body_iter(&mut r, dt.0);
 }
 
-fn n_body_iter(objs: &mut [&mut Obj], dt: f64) {
+fn n_body_iter(objs: &mut [&mut CelestialBody], dt: f64) {
     for i in 0..objs.len() {
         let mut a = dvec2(0.0, 0.0);
         for j in 0..objs.len() {
@@ -37,7 +37,7 @@ fn n_body_iter(objs: &mut [&mut Obj], dt: f64) {
     }
 }
 
-pub fn calculate_energy(particles: &[&mut Obj]) -> f64 {
+pub fn calculate_energy(particles: &[&mut CelestialBody]) -> f64 {
     let mut ke = 0.0;
     let mut pe = 0.0;
 
