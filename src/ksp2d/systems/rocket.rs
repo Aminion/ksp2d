@@ -42,19 +42,8 @@ pub fn update_positions(
         d_f_local.y = TRUST;
     }
 
-    let d_f_global = d_f_local.rotate(DVec2::from_angle(body.a));
-    let d_a = dvec2(
-        if d_f_global.x.is_normal() {
-            d_f_global.x / body.mass
-        } else {
-            0.0
-        },
-        if d_f_global.y.is_normal() {
-            d_f_global.y / body.mass
-        } else {
-            0.0
-        },
-    );
+    let d_f_global = DVec2::from_angle(body.a).rotate(d_f_local);
+    let d_a = d_f_global / body.mass;
     let d_v = d_a * dt.0;
     let d_p = d_v * dt.0;
 
