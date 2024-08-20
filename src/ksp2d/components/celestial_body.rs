@@ -14,8 +14,8 @@ pub struct CelestialBody {
 }
 #[inline]
 fn bound_radian(x: f64) -> f64 {
-    const PI_SQ: f64 = std::f64::consts::PI * 2.0;
-    (PI_SQ + x) % PI_SQ
+    const DOUBLE_PI: f64 = std::f64::consts::PI * 2.0;
+    (DOUBLE_PI + x) % DOUBLE_PI
 }
 
 impl CelestialBody {
