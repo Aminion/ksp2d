@@ -71,6 +71,7 @@ pub fn main() {
     resources.insert(SpaceScale(1280.0 / SPACE_SIZE));
 
     let rocket = CelestialBody {
+        a: 0.0,
         a_vel: 0.0,
         mass: 2965000.0,
         pos: dvec2(149597870700.0 / 4.0, 149597870700.0),
@@ -94,6 +95,7 @@ pub fn main() {
         .build();
 
     let pl1 = CelestialBody {
+        a: 0.0,
         a_vel: 0.0,
         mass: 5.9722e24,
         pos: dvec2(149597870700.0, 0.0),
@@ -103,6 +105,7 @@ pub fn main() {
     };
 
     let pl2 = CelestialBody {
+        a: 0.0,
         a_vel: 0.0,
         mass: 1.9884e30,
         pos: dvec2(149597870700.0 * 2.0, 149597870700.0),

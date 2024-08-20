@@ -28,10 +28,12 @@ pub fn update_positions(
 
     if input.contains(&PlayerInput::RotateRight) {
         pos.a += ANGLE_SPD * dt.0;
+        body.change_a_vel(ANGLE_SPD * dt.0);
     } else if input.contains(&PlayerInput::RotateLeft) {
         pos.a -= ANGLE_SPD * dt.0;
+        body.change_a_vel(-ANGLE_SPD * dt.0);
     }
-
+    info!("ANGULAR {}", body.a_vel);
     let mut d_f_local = DVec2::ZERO;
 
     if input.contains(&PlayerInput::MoveRight) {
