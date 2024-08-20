@@ -10,10 +10,10 @@ const G: f64 = physical_constants::NEWTONIAN_CONSTANT_OF_GRAVITATION;
 pub fn celestial_body(world: &mut SubWorld, #[resource] dt: &Dt) {
     let mut query = <&mut CelestialBody>::query();
     let mut r: Vec<&mut CelestialBody> = query.iter_mut(world).collect();
-    n_body_iter(&mut r, dt.0);
+    n_body_iter(&mut r, dt);
 }
 
-fn n_body_iter(objs: &mut [&mut CelestialBody], dt: f64) {
+fn n_body_iter(objs: &mut [&mut CelestialBody], dt: &Dt) {
     for i in 0..objs.len() {
         let mut a = dvec2(0.0, 0.0);
         for j in 0..objs.len() {
@@ -31,11 +31,12 @@ fn n_body_iter(objs: &mut [&mut CelestialBody], dt: f64) {
     }
 
     for o in objs.iter_mut() {
-        let dv = o.acc * dt;
+        let dv = o.acc * dt.0;
         o.vel += dv;
-        let next_pos = 2.0 * o.pos - o.prev_pos + dv * dt;
+        let next_pos = 2.0 * o.pos - o.prev_pos + dv * dt.0;
         o.prev_pos = o.pos;
         o.pos = next_pos;
+        o.update_a(dt)
     }
 }
 

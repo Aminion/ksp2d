@@ -1,5 +1,7 @@
 use glam::DVec2;
 
+use crate::Dt;
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CelestialBody {
     pub mass: f64,
@@ -11,16 +13,13 @@ pub struct CelestialBody {
     pub prev_pos: DVec2,
 }
 #[inline]
-fn change_radian(current: f64, change: f64) -> f64 {
-    (current + change) % (2.0 * std::f64::consts::PI)
+fn bound_radian(x: f64) -> f64 {
+    const PI_SQ: f64 = std::f64::consts::PI * 2.0;
+    (PI_SQ + x) % PI_SQ
 }
 
 impl CelestialBody {
-    pub fn change_a_vel(&mut self, change: f64) {
-        self.a_vel = change_radian(self.a_vel, change);
-    }
-
-    pub fn change_vel(&mut self, change: f64) {
-        self.a = change_radian(self.a, change);
+    pub fn update_a(&mut self, dt: &Dt) {
+        self.a = bound_radian(self.a + self.a_vel * dt.0);
     }
 }

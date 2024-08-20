@@ -23,7 +23,7 @@ pub fn render(#[resource] canvas: &mut WindowCanvas, #[resource] scale: &SpaceSc
         let query = world.entry_ref(position.celestial_body).unwrap();
         let body = query.get_component::<CelestialBody>().unwrap();
         let pos_s = body.pos * scale.0;
-        let r_mtx = DMat2::from_angle(position.a);
+        let r_mtx = DMat2::from_angle(body.a);
         const L0: DVec2 = dvec2(-25.0, 0.0);
         let l0_t = rotate_vec_by_mtx(&r_mtx, L0) + pos_s;
         let p0_i16 = l0_t.as_i16vec2();

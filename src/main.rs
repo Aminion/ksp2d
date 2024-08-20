@@ -83,7 +83,6 @@ pub fn main() {
     let rocket_e = world.push((rocket,));
 
     world.push((Rocket {
-        a: 0f64,
         celestial_body: rocket_e,
     },));
 
