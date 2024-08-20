@@ -1,4 +1,3 @@
-use glam::DVec2;
 use legion::Entity;
 
 #[derive(Clone, Copy, Debug, PartialEq)]

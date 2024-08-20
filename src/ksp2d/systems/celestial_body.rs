@@ -31,7 +31,9 @@ fn n_body_iter(objs: &mut [&mut CelestialBody], dt: f64) {
     }
 
     for o in objs.iter_mut() {
-        let next_pos = 2.0 * o.pos - o.prev_pos + o.acc * dt.exp2();
+        let dv = o.acc * dt;
+        o.vel += dv;
+        let next_pos = 2.0 * o.pos - o.prev_pos + dv * dt;
         o.prev_pos = o.pos;
         o.pos = next_pos;
     }
