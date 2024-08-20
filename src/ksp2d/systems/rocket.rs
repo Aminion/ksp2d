@@ -1,21 +1,16 @@
 use std::collections::HashSet;
 
-use glam::{dvec2, DMat2, DVec2};
+use glam::{dvec2, DVec2};
 use legion::{world::SubWorld, *};
 use log::info;
 
 use crate::{
     ksp2d::components::{
-        celestial_body::{self, CelestialBody},
+        celestial_body::CelestialBody,
         rocket::PlayerInput,
     },
     Dt, Rocket,
 };
-
-#[inline(always)]
-fn rotate_vec_by_mtx(r_mtx: &DMat2, v: DVec2) -> DVec2 {
-    DVec2::new(r_mtx.row(0).dot(v), r_mtx.row(1).dot(v))
-}
 
 #[system(for_each)]
 #[write_component(CelestialBody)]
@@ -36,8 +31,6 @@ pub fn update_positions(
     } else if input.contains(&PlayerInput::RotateLeft) {
         pos.a -= ANGLE_SPD * dt.0;
     }
-
-    let r_mtx = DMat2::from_angle(pos.a);
 
     let mut d_f_local = DVec2::ZERO;
 

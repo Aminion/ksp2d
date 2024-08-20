@@ -7,7 +7,7 @@ extern crate rand;
 extern crate sdl2;
 
 use core::f64;
-use glam::{dvec2, DVec2};
+use glam::dvec2;
 use ksp2d::components::celestial_body::CelestialBody;
 use ksp2d::components::rocket::Rocket;
 use ksp2d::systems::celestial_body::celestial_body_system;
@@ -71,6 +71,7 @@ pub fn main() {
     resources.insert(SpaceScale(1280.0 / SPACE_SIZE));
 
     let rocket = CelestialBody {
+        a_vel: 0.0,
         mass: 2965000.0,
         pos: dvec2(149597870700.0 / 4.0, 149597870700.0),
         prev_pos: dvec2(149597870700.0 / 4.0, 149597870700.0),
@@ -78,7 +79,7 @@ pub fn main() {
         acc: dvec2(0.0, 0.0),
     };
 
-    let rocket_e = world.push((rocket, ));
+    let rocket_e = world.push((rocket,));
 
     world.push((Rocket {
         a: 0f64,
@@ -93,6 +94,7 @@ pub fn main() {
         .build();
 
     let pl1 = CelestialBody {
+        a_vel: 0.0,
         mass: 5.9722e24,
         pos: dvec2(149597870700.0, 0.0),
         prev_pos: dvec2(149597870700.0, 0.0),
@@ -101,6 +103,7 @@ pub fn main() {
     };
 
     let pl2 = CelestialBody {
+        a_vel: 0.0,
         mass: 1.9884e30,
         pos: dvec2(149597870700.0 * 2.0, 149597870700.0),
         prev_pos: dvec2(149597870700.0 * 2.0, 149597870700.0),
@@ -109,8 +112,6 @@ pub fn main() {
     };
 
     world.extend(vec![(pl1,), (pl2,)]);
-
-
 
     'running: loop {
         let dt = Dt(frame.elapsed().as_secs_f64());
