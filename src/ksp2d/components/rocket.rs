@@ -1,8 +1,6 @@
-use legion::Entity;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Rocket {
-    pub celestial_body: Entity,
 }
 
 #[derive(PartialEq, Eq, Hash, Debug)]

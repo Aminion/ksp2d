@@ -1,34 +1,31 @@
-use glam::{dvec2, DMat2, DVec2};
+use glam::{dvec2, DVec2};
 use legion::{world::SubWorld, *};
+use log::info;
 use sdl2::{gfx::primitives::DrawRenderer, pixels::Color, render::WindowCanvas};
 
 use crate::{
-    ksp2d::components::{celestial_body::CelestialBody, rocket::Rocket},
+    ksp2d::components::{celestial_body::CelestialBody, newton_body::NewtonBody, rocket::Rocket},
     SpaceScale,
 };
-
-#[inline(always)]
-fn rotate_vec_by_mtx(r_mtx: &DMat2, v: DVec2) -> DVec2 {
-    DVec2::new(r_mtx.row(0).dot(v), r_mtx.row(1).dot(v))
-}
 
 const COLOR: Color = Color::RGB(0, 255, 255);
 
 #[system]
 #[read_component(Rocket)]
 #[read_component(CelestialBody)]
+#[read_component(NewtonBody)]
 pub fn render(
     #[resource] canvas: &mut WindowCanvas,
     #[resource] scale: &SpaceScale,
     world: &SubWorld,
-) {
-    let mut position_query = <&Rocket>::query();
+) { 
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
 
-    for position in position_query.iter(world) {
-        let query = world.entry_ref(position.celestial_body).unwrap();
-        let body = query.get_component::<CelestialBody>().unwrap();
+    let mut position_query = <(&Rocket, &NewtonBody)>::query();
+
+    for (_, body) in position_query.iter(world) {
+        info!("ROCKET");
         let pos_s = body.pos * scale.0;
         let r_vec = DVec2::from_angle(body.a);
         const L0: DVec2 = dvec2(-25.0, 0.0);
@@ -55,9 +52,10 @@ pub fn render(
         );
     }
 
-    let mut obj_query = <&CelestialBody>::query();
-    for o in obj_query.iter(world) {
-        let s = (o.pos * scale.0).as_i16vec2();
+    let mut obj_query = <(&CelestialBody, &NewtonBody)>::query();
+
+    for (_, body) in obj_query.iter(world) {
+        let s = (body.pos * scale.0).as_i16vec2();
         let _ = canvas.circle(s.x, s.y, 5, Color::RGB(0, 255, 0));
     }
     canvas.present();

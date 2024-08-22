@@ -1,25 +1,26 @@
 use std::collections::HashSet;
 
-use glam::{dvec2, DVec2};
-use legion::{world::SubWorld, *};
+use glam::DVec2;
+use legion::*;
+use log::info;
 
 use crate::{
-    ksp2d::components::{celestial_body::CelestialBody, rocket::PlayerInput},
+    ksp2d::components::{newton_body::NewtonBody, rocket::PlayerInput},
     Dt, Rocket,
 };
 
 #[system(for_each)]
-#[write_component(CelestialBody)]
+#[read_component(Rocket)]
+#[write_component(NewtonBody)]
 pub fn update_positions(
-    pos: &mut Rocket,
+    _rocket: &Rocket,
+    body: &mut NewtonBody,
     #[resource] dt: &Dt,
     #[resource] input: &HashSet<PlayerInput>,
-    world: &mut SubWorld,
 ) {
+    info!("rocket upd");
     const ANGLE_SPD: f64 = std::f64::consts::FRAC_PI_8;
     const TRUST: f64 = 34343000000000000.0;
-    let mut query = world.entry_mut(pos.celestial_body).unwrap();
-    let body = query.get_component_mut::<CelestialBody>().unwrap();
 
     if input.contains(&PlayerInput::RotateRight) {
         body.a_vel += ANGLE_SPD * dt.0;

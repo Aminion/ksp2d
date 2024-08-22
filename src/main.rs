@@ -9,8 +9,9 @@ extern crate sdl2;
 use core::f64;
 use glam::dvec2;
 use ksp2d::components::celestial_body::CelestialBody;
+use ksp2d::components::newton_body::NewtonBody;
 use ksp2d::components::rocket::Rocket;
-use ksp2d::systems::celestial_body::celestial_body_system;
+use ksp2d::systems::newton_body::celestial_body_system;
 use ksp2d::systems::render::render_system;
 use ksp2d::systems::rocket::update_positions_system;
 use log::info;
@@ -70,7 +71,7 @@ pub fn main() {
     resources.insert(HashSet::<PlayerInput>::new());
     resources.insert(SpaceScale(1280.0 / SPACE_SIZE));
 
-    let rocket = CelestialBody {
+    let rocket = NewtonBody {
         a: 0.0,
         a_vel: 0.0,
         mass: 2965000.0,
@@ -82,9 +83,7 @@ pub fn main() {
 
     let rocket_e = world.push((rocket,));
 
-    world.push((Rocket {
-        celestial_body: rocket_e,
-    },));
+    world.push((Rocket {}, rocket_e));
 
     let mut schedule = Schedule::builder()
         .add_system(update_positions_system())
@@ -93,7 +92,7 @@ pub fn main() {
         .add_thread_local(render_system())
         .build();
 
-    let pl1 = CelestialBody {
+    let pl1 = NewtonBody {
         a: 0.0,
         a_vel: 0.0,
         mass: 5.9722e24,
@@ -103,7 +102,7 @@ pub fn main() {
         acc: dvec2(0.0, 0.0),
     };
 
-    let pl2 = CelestialBody {
+    let pl2 = NewtonBody {
         a: 0.0,
         a_vel: 0.0,
         mass: 1.9884e30,
@@ -113,7 +112,7 @@ pub fn main() {
         acc: dvec2(0.0, 0.0),
     };
 
-    world.extend(vec![(pl1,), (pl2,)]);
+    world.extend(vec![(CelestialBody {}, pl1), (CelestialBody {}, pl2)]);
 
     'running: loop {
         let dt = Dt(frame.elapsed().as_secs_f64());
