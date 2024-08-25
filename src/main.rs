@@ -71,7 +71,14 @@ pub fn main() {
     resources.insert(HashSet::<PlayerInput>::new());
     resources.insert(SpaceScale(1280.0 / SPACE_SIZE));
 
-    let rocket = NewtonBody {
+    let mut schedule = Schedule::builder()
+        .add_system(update_positions_system())
+        .add_system(celestial_body_system())
+        .flush()
+        .add_thread_local(render_system())
+        .build();
+
+    let rocket_body = NewtonBody {
         a: 0.0,
         a_vel: 0.0,
         mass: 2965000.0,
@@ -81,16 +88,7 @@ pub fn main() {
         acc: dvec2(0.0, 0.0),
     };
 
-    let rocket_e = world.push((rocket,));
-
-    world.push((Rocket {}, rocket_e));
-
-    let mut schedule = Schedule::builder()
-        .add_system(update_positions_system())
-        .add_system(celestial_body_system())
-        .flush()
-        .add_thread_local(render_system())
-        .build();
+    world.push((Rocket {}, rocket_body));
 
     let pl1 = NewtonBody {
         a: 0.0,

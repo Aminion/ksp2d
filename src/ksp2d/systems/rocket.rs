@@ -2,7 +2,6 @@ use std::collections::HashSet;
 
 use glam::DVec2;
 use legion::*;
-use log::info;
 
 use crate::{
     ksp2d::components::{newton_body::NewtonBody, rocket::PlayerInput},
@@ -18,7 +17,6 @@ pub fn update_positions(
     #[resource] dt: &Dt,
     #[resource] input: &HashSet<PlayerInput>,
 ) {
-    info!("rocket upd");
     const ANGLE_SPD: f64 = std::f64::consts::FRAC_PI_8;
     const TRUST: f64 = 34343000000000000.0;
 

@@ -1,6 +1,5 @@
 use glam::{dvec2, DVec2};
 use legion::{world::SubWorld, *};
-use log::info;
 use sdl2::{gfx::primitives::DrawRenderer, pixels::Color, render::WindowCanvas};
 
 use crate::{
@@ -25,7 +24,6 @@ pub fn render(
     let mut position_query = <(&Rocket, &NewtonBody)>::query();
 
     for (_, body) in position_query.iter(world) {
-        info!("ROCKET");
         let pos_s = body.pos * scale.0;
         let r_vec = DVec2::from_angle(body.a);
         const L0: DVec2 = dvec2(-25.0, 0.0);
