@@ -1,4 +1,4 @@
-{ stdenv, pkg-config, SDL2, SDL2_mixer, elfkickers, valgrind, kdeApplications }:
+{ stdenv, pkg-config, SDL2, SDL2_mixer, SDL2_ttf, elfkickers, valgrind, kdeApplications }:
 
 stdenv.mkDerivation rec {
   pname = "ksp2d";
@@ -6,7 +6,7 @@ stdenv.mkDerivation rec {
 
   src = ./.;
   nativeBuildInputs = [ pkg-config elfkickers valgrind kdeApplications.kcachegrind];
-  buildInputs = [ SDL2 SDL2_mixer ];
+  buildInputs = [ SDL2 SDL2_mixer SDL2_gfx SDL2_ttf];
 
   installPhase = ''
     mkdir -p $out/bin
@@ -14,7 +14,7 @@ stdenv.mkDerivation rec {
   '';
 
   meta = with stdenv.lib; {
-    description = "desc";
+    description = "desc";cargt
     longDescription = ''
       long desc
     '';

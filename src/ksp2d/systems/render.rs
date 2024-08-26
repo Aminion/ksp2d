@@ -1,6 +1,10 @@
 use glam::{dvec2, DVec2};
 use legion::{world::SubWorld, *};
-use sdl2::{gfx::primitives::DrawRenderer, pixels::Color, render::WindowCanvas};
+use sdl2::{
+    gfx::primitives::DrawRenderer,
+    pixels::Color,
+    render::{TextureQuery, WindowCanvas}, ttf,
+};
 
 use crate::{
     ksp2d::components::{celestial_body::CelestialBody, newton_body::NewtonBody, rocket::Rocket},
@@ -17,7 +21,7 @@ pub fn render(
     #[resource] canvas: &mut WindowCanvas,
     #[resource] scale: &SpaceScale,
     world: &SubWorld,
-) { 
+) {
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
 
@@ -56,5 +60,24 @@ pub fn render(
         let s = (body.pos * scale.0).as_i16vec2();
         let _ = canvas.circle(s.x, s.y, 5, Color::RGB(0, 255, 0));
     }
+
+    let ctx = ttf::init().unwrap();
+    let font = ctx.load_font("static/OpenSans-Regular.ttf", 24).unwrap();
+    let surface = font
+        .render("Hello Rust!")
+        .blended(Color::RGBA(255, 0, 0, 255))
+        .map_err(|e| e.to_string())
+        .unwrap();
+    let texture_creator = canvas.texture_creator();
+    let texture = texture_creator
+        .create_texture_from_surface(&surface)
+        .map_err(|e| e.to_string())
+        .unwrap();
+
+    let TextureQuery { width, height, .. } = texture.query();
+    let padding = 64;
+
+    canvas.copy(&texture, None, None).unwrap();
+
     canvas.present();
 }

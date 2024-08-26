@@ -15,7 +15,7 @@ physical_constants = "0.5.0"
 [dependencies.sdl2]
 version = "^0.37"
 default-features = false
-features = ["mixer", "gfx"]
+features = ["mixer", "gfx", "ttf"]
 
 [dependencies.legion]
 version = "^0.4.0"
