@@ -1,4 +1,4 @@
-{ stdenv, pkg-config, SDL2, SDL2_mixer, SDL2_ttf, elfkickers, valgrind, kdeApplications }:
+{ stdenv, pkg-config, SDL2, SDL2_mixer, SDL2_ttf, open-sans, elfkickers, valgrind, kdeApplications }:
 
 stdenv.mkDerivation rec {
   pname = "ksp2d";
@@ -6,11 +6,15 @@ stdenv.mkDerivation rec {
 
   src = ./.;
   nativeBuildInputs = [ pkg-config elfkickers valgrind kdeApplications.kcachegrind];
-  buildInputs = [ SDL2 SDL2_mixer SDL2_gfx SDL2_ttf];
+  buildInputs = [ SDL2 SDL2_mixer SDL2_gfx SDL2_ttf open-sans];
 
   installPhase = ''
     mkdir -p $out/bin
     cp ksp2d $out/bin
+  '';
+
+  postInstall = ''
+    ln -s ${open-sans} $out/bin
   '';
 
   meta = with stdenv.lib; {

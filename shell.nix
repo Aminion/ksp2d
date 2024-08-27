@@ -10,5 +10,9 @@ stdenv.mkDerivation rec {
     SDL2_mixer
     SDL2_gfx
     SDL2_ttf
+    open-sans
   ];
+   shellHook = ''
+    ln -s ${open-sans}/share/fonts/truetype ./
+  '';
 }

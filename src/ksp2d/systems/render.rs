@@ -62,7 +62,7 @@ pub fn render(
     }
 
     let ctx = ttf::init().unwrap();
-    let font = ctx.load_font("static/OpenSans-Regular.ttf", 24).unwrap();
+    let font = ctx.load_font("truetype/OpenSans-Regular.ttf", 24).unwrap();
     let surface = font
         .render("Hello Rust!")
         .blended(Color::RGBA(255, 0, 0, 255))
