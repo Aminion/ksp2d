@@ -13,6 +13,6 @@ stdenv.mkDerivation rec {
     open-sans
   ];
    shellHook = ''
-    ln -s ${open-sans}/share/fonts/truetype ./
+    ln -sf ${open-sans}/share/fonts/truetype ./
   '';
 }
