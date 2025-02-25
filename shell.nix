@@ -5,7 +5,7 @@ stdenv.mkDerivation rec {
   env = buildEnv { name = name; paths = buildInputs; };
 
   buildInputs = [
-    llvm_18
+    llvm_19
     SDL2
     SDL2_mixer
     SDL2_gfx
