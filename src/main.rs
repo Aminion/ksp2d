@@ -65,6 +65,7 @@ pub fn main() {
     env_logger::init();
     let (canvas, mut event_pump) = initialize().unwrap();
     let mut frame = Instant::now();
+    let mut frame_time = Instant::now();
     let mut world = World::default();
     let mut resources = Resources::default();
     resources.insert(canvas);
@@ -116,6 +117,7 @@ pub fn main() {
         let dt = Dt(frame.elapsed().as_secs_f64());
         info!("FPS {}", dt.0.recip());
         frame = Instant::now();
+        frame_time = Instant::now();
         resources.insert(dt);
         {
             let mut pinput = resources.get_mut::<HashSet<PlayerInput>>().unwrap();
@@ -129,51 +131,37 @@ pub fn main() {
                     Event::KeyDown {
                         scancode: Some(code),
                         ..
-                    } => match code {
-                        Scancode::A => {
-                            pinput.insert(PlayerInput::MoveLeft);
+                    } => {
+                        let insertion = match code {
+                            Scancode::A => Some(PlayerInput::MoveLeft),
+                            Scancode::D => Some(PlayerInput::MoveRight),
+                            Scancode::W => Some(PlayerInput::MoveForward),
+                            Scancode::S => Some(PlayerInput::MoveBackward),
+                            Scancode::Q => Some(PlayerInput::RotateLeft),
+                            Scancode::E => Some(PlayerInput::RotateRight),
+                            _ => None,
+                        };
+                        if let Some(player_input) = insertion {
+                            pinput.insert(player_input);
                         }
-                        Scancode::D => {
-                            pinput.insert(PlayerInput::MoveRight);
-                        }
-                        Scancode::W => {
-                            pinput.insert(PlayerInput::MoveForward);
-                        }
-                        Scancode::S => {
-                            pinput.insert(PlayerInput::MoveBackward);
-                        }
-                        Scancode::Q => {
-                            pinput.insert(PlayerInput::RotateLeft);
-                        }
-                        Scancode::E => {
-                            pinput.insert(PlayerInput::RotateRight);
-                        }
-                        _ => (),
-                    },
+                    }
                     Event::KeyUp {
                         scancode: Some(code),
                         ..
-                    } => match code {
-                        Scancode::A => {
-                            pinput.remove(&PlayerInput::MoveLeft);
+                    } => {
+                        let insertion = match code {
+                            Scancode::A => Some(&PlayerInput::MoveLeft),
+                            Scancode::D => Some(&PlayerInput::MoveRight),
+                            Scancode::W => Some(&PlayerInput::MoveForward),
+                            Scancode::S => Some(&PlayerInput::MoveBackward),
+                            Scancode::Q => Some(&PlayerInput::RotateLeft),
+                            Scancode::E => Some(&PlayerInput::RotateRight),
+                            _ => None,
+                        };
+                        if let Some(player_input) = insertion {
+                            pinput.remove(player_input);
                         }
-                        Scancode::D => {
-                            pinput.remove(&PlayerInput::MoveRight);
-                        }
-                        Scancode::W => {
-                            pinput.remove(&PlayerInput::MoveForward);
-                        }
-                        Scancode::S => {
-                            pinput.remove(&PlayerInput::MoveBackward);
-                        }
-                        Scancode::Q => {
-                            pinput.remove(&PlayerInput::RotateLeft);
-                        }
-                        Scancode::E => {
-                            pinput.remove(&PlayerInput::RotateRight);
-                        }
-                        _ => (),
-                    },
+                    }
                     Event::Window {
                         win_event: WindowEvent::SizeChanged(x, y),
                         ..
@@ -186,5 +174,7 @@ pub fn main() {
             }
         }
         schedule.execute(&mut world, &mut resources);
+        let dt_frame_time = frame_time.elapsed().as_millis();
+        info!("FRAME TIME {} MS", dt_frame_time);
     }
 }
