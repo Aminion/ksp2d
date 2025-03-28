@@ -1,7 +1,5 @@
-
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Rocket {
-}
+pub struct Rocket {}
 
 #[derive(PartialEq, Eq, Hash, Debug)]
 pub enum PlayerInput {

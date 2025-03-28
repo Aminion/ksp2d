@@ -1,13 +1,11 @@
-use glam::{dvec2, DVec2};
+use glam::{dvec2, vec2, DVec2};
 use legion::{world::SubWorld, *};
 use sdl2::{gfx::primitives::DrawRenderer, pixels::Color};
 
 use crate::{
     ksp2d::components::{celestial_body::CelestialBody, newton_body::NewtonBody, rocket::Rocket},
-    CanvasResources, Dt, FontRenderer, PerformanceInfo, SpaceScale,
+    CanvasResources, FontRenderer, PerformanceInfo, SpaceScale,
 };
-
-use super::performance_info;
 
 const COLOR: Color = Color::RGB(0, 255, 255);
 
@@ -16,7 +14,6 @@ const COLOR: Color = Color::RGB(0, 255, 255);
 #[read_component(CelestialBody)]
 #[read_component(NewtonBody)]
 pub fn render(
-    #[resource] dt: &Dt,
     #[resource] canvas_resources: &mut CanvasResources,
     #[resource] scale: &SpaceScale,
     #[resource] font_renderer: &mut FontRenderer<1>,
@@ -66,9 +63,8 @@ pub fn render(
     font_renderer
         .render_text(
             canvas_resources,
-            format!("FPS {}", performance_info.fps).as_str(),
-            0.0,
-            0.0,
+            &format!("FPS {}", performance_info.fps),
+            vec2(0.0, 0.0),
             16.0,
             Color::RGB(255, 0, 255),
             0,

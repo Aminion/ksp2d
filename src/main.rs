@@ -10,7 +10,7 @@ use core::f64;
 use fontdue::layout::{Layout, TextStyle};
 use fontdue::{Font, FontSettings};
 use fontdue_sdl2::FontTexture;
-use glam::dvec2;
+use glam::{dvec2, Vec2};
 use ksp2d::components::celestial_body::CelestialBody;
 use ksp2d::components::newton_body::NewtonBody;
 use ksp2d::components::rocket::Rocket;
@@ -18,7 +18,6 @@ use ksp2d::systems::newton_body::celestial_body_system;
 use ksp2d::systems::performance_info::update_info_system;
 use ksp2d::systems::render::render_system;
 use ksp2d::systems::rocket::update_positions_system;
-use log::info;
 use sdl2::event::WindowEvent;
 use sdl2::mixer::InitFlag;
 use sdl2::pixels::Color;
@@ -46,7 +45,7 @@ pub struct CanvasResources {
 pub struct PerformanceInfo {
     pub fps: u64,
     pub frame_tme: u64,
-    pub update_timer : Instant
+    pub update_timer: Instant,
 }
 
 // Define a resource for font rendering
@@ -55,7 +54,7 @@ pub struct FontRenderer<const N: usize> {
     pub layout: Layout<Color>,
 }
 
-impl<'a, const N: usize> FontRenderer<N> {
+impl<const N: usize> FontRenderer<N> {
     pub fn new(fonts: [Font; N]) -> Result<Self, String> {
         let layout = Layout::new(fontdue::layout::CoordinateSystem::PositiveYDown);
         Ok(FontRenderer {
@@ -68,22 +67,21 @@ impl<'a, const N: usize> FontRenderer<N> {
         &mut self,
         canvas_resources: &mut CanvasResources,
         text: &str,
-        x: f32,
-        y: f32,
+        at: Vec2,
         font_size: f32,
         font_color: Color,
         font_index: usize,
     ) -> Result<(), String> {
         self.layout.reset(&fontdue::layout::LayoutSettings {
-            x,
-            y,
+            x: at.x,
+            y: at.y,
             ..Default::default()
         });
         self.layout.append(
             &self.font,
             &TextStyle::with_user_data(text, font_size, font_index, font_color),
         );
-        let mut texture = FontTexture::new(&canvas_resources.texture_creator)?; // Create SurfaceTexture
+        let mut texture = FontTexture::new(&canvas_resources.texture_creator)?;
         texture.draw_text(
             &mut canvas_resources.canvas,
             &self.font,
@@ -133,7 +131,6 @@ pub fn main() {
     let (canvas, mut event_pump) = initialize().unwrap();
     let texture_creator = canvas.texture_creator();
     let mut frame = Instant::now();
-    let mut frame_time = Instant::now();
     let mut world = World::default();
     let mut resources = Resources::default();
 
@@ -146,7 +143,7 @@ pub fn main() {
     let perf_info = PerformanceInfo {
         fps: 0,
         frame_tme: 0,
-        update_timer:Instant::now()
+        update_timer: Instant::now(),
     };
     resources.insert(canvas_resources);
     resources.insert(perf_info);
@@ -200,9 +197,7 @@ pub fn main() {
 
     'running: loop {
         let dt = Dt(frame.elapsed().as_secs_f64());
-        info!("FPS {}", dt.0.recip());
         frame = Instant::now();
-        frame_time = Instant::now();
         resources.insert(dt);
         {
             let mut pinput = resources.get_mut::<HashSet<PlayerInput>>().unwrap();
@@ -259,7 +254,5 @@ pub fn main() {
             }
         }
         schedule.execute(&mut world, &mut resources);
-        let dt_frame_time = frame_time.elapsed().as_millis();
-        info!("FRAME TIME {} MS", dt_frame_time);
     }
 }
