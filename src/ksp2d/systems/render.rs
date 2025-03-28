@@ -1,15 +1,13 @@
 use glam::{dvec2, DVec2};
 use legion::{world::SubWorld, *};
-use sdl2::{
-    gfx::primitives::DrawRenderer,
-    pixels::Color,
-    render::{TextureQuery, WindowCanvas}, ttf,
-};
+use sdl2::{gfx::primitives::DrawRenderer, pixels::Color};
 
 use crate::{
     ksp2d::components::{celestial_body::CelestialBody, newton_body::NewtonBody, rocket::Rocket},
-    SpaceScale,
+    CanvasResources, Dt, FontRenderer, PerformanceInfo, SpaceScale,
 };
+
+use super::performance_info;
 
 const COLOR: Color = Color::RGB(0, 255, 255);
 
@@ -18,12 +16,15 @@ const COLOR: Color = Color::RGB(0, 255, 255);
 #[read_component(CelestialBody)]
 #[read_component(NewtonBody)]
 pub fn render(
-    #[resource] canvas: &mut WindowCanvas,
+    #[resource] dt: &Dt,
+    #[resource] canvas_resources: &mut CanvasResources,
     #[resource] scale: &SpaceScale,
+    #[resource] font_renderer: &mut FontRenderer<1>,
+    #[resource] performance_info: &PerformanceInfo,
     world: &SubWorld,
 ) {
-    canvas.set_draw_color(Color::RGB(0, 0, 0));
-    canvas.clear();
+    canvas_resources.canvas.set_draw_color(Color::RGB(0, 0, 0));
+    canvas_resources.canvas.clear();
 
     let mut position_query = <(&Rocket, &NewtonBody)>::query();
 
@@ -42,10 +43,10 @@ pub fn render(
         let l2_t = r_vec.rotate(L2) + pos_s;
         let p2_i16 = l2_t.as_i16vec2();
 
-        let _ = canvas.filled_trigon(
+        let _ = canvas_resources.canvas.filled_trigon(
             p0_i16.x, p0_i16.y, p1_i16.x, p1_i16.y, p2_i16.x, p2_i16.y, COLOR,
         );
-        let _ = canvas.line(
+        let _ = canvas_resources.canvas.line(
             p2_i16.x,
             p2_i16.y,
             p0_i16.x,
@@ -58,26 +59,20 @@ pub fn render(
 
     for (_, body) in obj_query.iter(world) {
         let s = (body.pos * scale.0).as_i16vec2();
-        let _ = canvas.circle(s.x, s.y, 5, Color::RGB(0, 255, 0));
+        let _ = canvas_resources
+            .canvas
+            .circle(s.x, s.y, 5, Color::RGB(0, 255, 0));
     }
-
-    let ctx = ttf::init().unwrap();
-    let font = ctx.load_font("truetype/OpenSans-Regular.ttf", 24).unwrap();
-    let surface = font
-        .render("Hello Rust!")
-        .blended(Color::RGBA(255, 0, 0, 255))
-        .map_err(|e| e.to_string())
+    font_renderer
+        .render_text(
+            canvas_resources,
+            format!("FPS {}", performance_info.fps).as_str(),
+            0.0,
+            0.0,
+            16.0,
+            Color::RGB(255, 0, 255),
+            0,
+        )
         .unwrap();
-    let texture_creator = canvas.texture_creator();
-    let texture = texture_creator
-        .create_texture_from_surface(&surface)
-        .map_err(|e| e.to_string())
-        .unwrap();
-
-    let TextureQuery { width, height, .. } = texture.query();
-    let padding = 64;
-
-    canvas.copy(&texture, None, None).unwrap();
-
-    canvas.present();
+    canvas_resources.canvas.present();
 }
