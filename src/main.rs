@@ -23,13 +23,15 @@ use sdl2::video::{Window, WindowContext};
 use sdl2::EventPump;
 use sdl2::{event::Event, keyboard::Scancode};
 use std::collections::HashSet;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use legion::*;
 
 use crate::ksp2d::components::rocket::PlayerInput;
 
 pub struct Dt(f64);
+pub struct FrameTimer(Instant);
+pub struct FrameDuration(Duration);
 pub struct SpaceScale(f64);
 
 const SPACE_SIZE: f64 = 4.5029e+12 / 8.0;
@@ -58,6 +60,7 @@ fn initialize() -> Result<(WindowCanvas, EventPump), String> {
     let canvas = window
         .into_canvas()
         .accelerated()
+        .present_vsync()
         .build()
         .expect("could not make a canvas");
     let event_pump = sdl_context.event_pump().unwrap();
@@ -65,7 +68,7 @@ fn initialize() -> Result<(WindowCanvas, EventPump), String> {
     Ok((canvas, event_pump))
 }
 
-fn inital_resources(canvas: Canvas<Window>) -> Resources {
+fn initial_resources(canvas: Canvas<Window>) -> Resources {
     let mut resources = Resources::default();
     let texture_creator = canvas.texture_creator();
 
@@ -77,7 +80,7 @@ fn inital_resources(canvas: Canvas<Window>) -> Resources {
     let font_renderer = FontRenderer::new(fonts).unwrap();
     let perf_info = PerformanceInfo {
         fps: 0,
-        frame_tme: 0,
+        frame_time: 0,
         update_timer: Instant::now(),
     };
     resources.insert(canvas_resources);
@@ -85,6 +88,9 @@ fn inital_resources(canvas: Canvas<Window>) -> Resources {
     resources.insert(font_renderer);
     resources.insert(HashSet::<PlayerInput>::new());
     resources.insert(SpaceScale(1280.0 / SPACE_SIZE));
+    resources.insert(FrameTimer(Instant::now()));
+    resources.insert(FrameDuration(Duration::ZERO));
+    resources.insert(Dt(0.0));
     resources
 }
 
@@ -131,7 +137,7 @@ pub fn main() {
     std::env::set_var("RUST_BACKTRACE", "1");
     env_logger::init();
     let (canvas, mut event_pump) = initialize().unwrap();
-    let mut resources = inital_resources(canvas);
+    let mut resources = initial_resources(canvas);
     let mut world = initial_world();
     let mut schedule = Schedule::builder()
         .add_system(update_positions_system())
@@ -141,12 +147,12 @@ pub fn main() {
         .add_thread_local(render_system())
         .build();
 
-    let mut frame = Instant::now();
     'running: loop {
-        let dt = Dt(frame.elapsed().as_secs_f64());
-        frame = Instant::now();
-        resources.insert(dt);
         {
+            let mut frame_timer = resources.get_mut::<FrameTimer>().unwrap();
+            let mut frame_duration = resources.get_mut::<Dt>().unwrap();
+            frame_duration.0 = frame_timer.0.elapsed().as_secs_f64();
+            frame_timer.0 = Instant::now();
             let mut pinput = resources.get_mut::<HashSet<PlayerInput>>().unwrap();
             for event in event_pump.poll_iter() {
                 match event {
@@ -200,6 +206,7 @@ pub fn main() {
                 }
             }
         }
+
         schedule.execute(&mut world, &mut resources);
     }
 }

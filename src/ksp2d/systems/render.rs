@@ -3,8 +3,11 @@ use legion::{world::SubWorld, *};
 use sdl2::{gfx::primitives::DrawRenderer, pixels::Color};
 
 use crate::{
-    ksp2d::{components::{celestial_body::CelestialBody, newton_body::NewtonBody, rocket::Rocket}, systems::performance_info::PerformanceInfo},
-    CanvasResources, FontRenderer, SpaceScale,
+    ksp2d::{
+        components::{celestial_body::CelestialBody, newton_body::NewtonBody, rocket::Rocket},
+        systems::performance_info::PerformanceInfo,
+    },
+    CanvasResources, FontRenderer, FrameDuration, FrameTimer, SpaceScale,
 };
 
 const COLOR: Color = Color::RGB(0, 255, 255);
@@ -18,6 +21,8 @@ pub fn render(
     #[resource] scale: &SpaceScale,
     #[resource] font_renderer: &mut FontRenderer<1>,
     #[resource] performance_info: &PerformanceInfo,
+    #[resource] fd: &mut FrameDuration,
+    #[resource] ft: &FrameTimer,
     world: &SubWorld,
 ) {
     canvas_resources.canvas.set_draw_color(Color::RGB(0, 0, 0));
@@ -63,12 +68,16 @@ pub fn render(
     font_renderer
         .render_text(
             canvas_resources,
-            &format!("FPS {}", performance_info.fps),
+            &format!(
+                "FPS {} \nF. TIME {} uS",
+                performance_info.fps, performance_info.frame_time
+            ),
             vec2(0.0, 0.0),
             16.0,
             Color::RGB(255, 0, 255),
             0,
         )
         .unwrap();
+    fd.0 = ft.0.elapsed();
     canvas_resources.canvas.present();
 }
