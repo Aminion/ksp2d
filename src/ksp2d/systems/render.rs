@@ -3,8 +3,8 @@ use legion::{world::SubWorld, *};
 use sdl2::{gfx::primitives::DrawRenderer, pixels::Color};
 
 use crate::{
-    ksp2d::components::{celestial_body::CelestialBody, newton_body::NewtonBody, rocket::Rocket},
-    CanvasResources, FontRenderer, PerformanceInfo, SpaceScale,
+    ksp2d::{components::{celestial_body::CelestialBody, newton_body::NewtonBody, rocket::Rocket}, systems::performance_info::PerformanceInfo},
+    CanvasResources, FontRenderer, SpaceScale,
 };
 
 const COLOR: Color = Color::RGB(0, 255, 255);
