@@ -21,9 +21,9 @@ pub fn update_positions(
     const TRUST: f64 = 34343000000000000.0;
 
     if input.contains(&PlayerInput::RotateRight) {
-        body.a_vel += ANGLE_SPD * dt.0;
+        body.angular_vel += ANGLE_SPD * dt.0;
     } else if input.contains(&PlayerInput::RotateLeft) {
-        body.a_vel -= ANGLE_SPD * dt.0;
+        body.angular_vel -= ANGLE_SPD * dt.0;
     }
 
     body.update_a(dt);
@@ -41,7 +41,7 @@ pub fn update_positions(
         d_f_local.y = TRUST;
     }
 
-    let d_f_global = DVec2::from_angle(body.a).rotate(d_f_local);
+    let d_f_global = DVec2::from_angle(body.angle).rotate(d_f_local);
     let d_a = d_f_global / body.mass;
     let d_v = d_a * dt.0;
     let d_p = d_v * dt.0;

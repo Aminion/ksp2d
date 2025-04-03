@@ -8,7 +8,7 @@ extern crate rand;
 extern crate sdl2;
 
 use fonts::{load_fonts, FontRenderer};
-use glam::dvec2;
+use glam::{dvec2, ivec2, IVec2};
 use ksp2d::components::celestial_body::CelestialBody;
 use ksp2d::components::newton_body::NewtonBody;
 use ksp2d::components::rocket::Rocket;
@@ -33,6 +33,7 @@ pub struct Dt(f64);
 pub struct FrameTimer(Instant);
 pub struct FrameDuration(Duration);
 pub struct SpaceScale(f64);
+pub struct WindowSize(IVec2);
 
 const SPACE_SIZE: f64 = 4.5029e+12 / 8.0;
 
@@ -88,6 +89,7 @@ fn initial_resources(canvas: Canvas<Window>) -> Resources {
     resources.insert(font_renderer);
     resources.insert(HashSet::<PlayerInput>::new());
     resources.insert(SpaceScale(1280.0 / SPACE_SIZE));
+    resources.insert(WindowSize(ivec2(1280, 720)));
     resources.insert(FrameTimer(Instant::now()));
     resources.insert(FrameDuration(Duration::ZERO));
     resources.insert(Dt(0.0));
@@ -97,8 +99,8 @@ fn initial_resources(canvas: Canvas<Window>) -> Resources {
 fn initial_world() -> World {
     let mut world = World::default();
     let rocket_body = NewtonBody {
-        a: 0.0,
-        a_vel: 0.0,
+        angle: 0.0,
+        angular_vel: 0.0,
         mass: 2965000.0,
         pos: dvec2(149597870700.0 / 4.0, 149597870700.0),
         prev_pos: dvec2(149597870700.0 / 4.0, 149597870700.0),
@@ -109,8 +111,8 @@ fn initial_world() -> World {
     world.push((Rocket {}, rocket_body));
 
     let pl1 = NewtonBody {
-        a: 0.0,
-        a_vel: 0.0,
+        angle: 0.0,
+        angular_vel: 0.0,
         mass: 5.9722e24,
         pos: dvec2(149597870700.0, 0.0),
         prev_pos: dvec2(149597870700.0, 0.0),
@@ -119,8 +121,8 @@ fn initial_world() -> World {
     };
 
     let pl2 = NewtonBody {
-        a: 0.0,
-        a_vel: 0.0,
+        angle: 0.0,
+        angular_vel: 0.0,
         mass: 1.9884e30,
         pos: dvec2(149597870700.0 * 2.0, 149597870700.0),
         prev_pos: dvec2(149597870700.0 * 2.0, 149597870700.0),
@@ -200,7 +202,9 @@ pub fn main() {
                         ..
                     } => {
                         let mut r = resources.get_mut::<SpaceScale>().unwrap();
+                        let mut z = resources.get_mut::<WindowSize>().unwrap();
                         r.0 = x.max(y) as f64 / SPACE_SIZE;
+                        z.0 = ivec2(x, y);
                     }
                     _ => {}
                 }

@@ -7,7 +7,7 @@ use crate::{
         components::{celestial_body::CelestialBody, newton_body::NewtonBody, rocket::Rocket},
         systems::performance_info::PerformanceInfo,
     },
-    CanvasResources, FontRenderer, FrameDuration, FrameTimer, SpaceScale,
+    CanvasResources, FontRenderer, FrameDuration, FrameTimer, SpaceScale, WindowSize,
 };
 
 const COLOR: Color = Color::RGB(0, 255, 255);
@@ -19,6 +19,7 @@ const COLOR: Color = Color::RGB(0, 255, 255);
 pub fn render(
     #[resource] canvas_resources: &mut CanvasResources,
     #[resource] scale: &SpaceScale,
+    #[resource] window_size: &WindowSize,
     #[resource] font_renderer: &mut FontRenderer<1>,
     #[resource] performance_info: &PerformanceInfo,
     #[resource] fd: &mut FrameDuration,
@@ -32,7 +33,7 @@ pub fn render(
 
     for (_, body) in position_query.iter(world) {
         let pos_s = body.pos * scale.0;
-        let r_vec = DVec2::from_angle(body.a);
+        let r_vec = DVec2::from_angle(body.angle);
         const L0: DVec2 = dvec2(-25.0, 0.0);
         let l0_t = r_vec.rotate(L0) + pos_s;
         let p0_i16 = l0_t.as_i16vec2();
@@ -55,6 +56,17 @@ pub fn render(
             p0_i16.y,
             Color::RGB(255, 0, 0),
         );
+
+        font_renderer
+            .render_text(
+                canvas_resources,
+                &format!("SPEED    {}\nA.SPEED {}\nIN FLIGHT", body.vel.length(), body.angular_vel),
+                vec2((window_size.0.x - 450) as f32, 0.0),
+                16.0,
+                Color::RGB(255, 0, 255),
+                0,
+            )
+            .unwrap();
     }
 
     let mut obj_query = <(&CelestialBody, &NewtonBody)>::query();
