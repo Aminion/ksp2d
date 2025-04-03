@@ -76,10 +76,15 @@ pub fn render(
     let mut obj_query = <(&CelestialBody, &NewtonBody)>::query();
 
     for (c_body, body) in obj_query.iter(world) {
-        let s = (body.pos * scale.0).as_i16vec2();
-        let r = (c_body.radius * 2048.0 * scale.0) as i16;
-        println!("{}", r);
+        let pos_scaled = body.pos * scale.0;
+        let s = pos_scaled.as_i16vec2();
+        let r_scaled = c_body.radius * 2048.0 * scale.0;
+        let r = r_scaled as i16;
         let _ = canvas_resources.canvas.circle(s.x, s.y, r, c_body.color);
+        let lnn = (dvec2(0.0, r_scaled).rotate(DVec2::from_angle(body.angle))).as_i16vec2() + s;
+        let _ = canvas_resources
+            .canvas
+            .line(s.x, s.y, lnn.x, lnn.y, c_body.color);
     }
     font_renderer
         .render_text(

@@ -113,7 +113,7 @@ fn initial_world() -> World {
 
     let pl1 = NewtonBody {
         angle: 0.0,
-        angular_vel: 0.0,
+        angular_vel: 1.0,
         mass: 5.9722e24,
         pos: dvec2(149597870700.0, 149597870700.0 * 0.5),
         prev_pos: dvec2(149597870700.0, 149597870700.0 * 0.5),
@@ -123,7 +123,7 @@ fn initial_world() -> World {
 
     let pl2 = NewtonBody {
         angle: 0.0,
-        angular_vel: 0.0,
+        angular_vel: 2.0,
         mass: 1.9884e30,
         pos: dvec2(149597870700.0 * 2.0, 149597870700.0),
         prev_pos: dvec2(149597870700.0 * 2.0, 149597870700.0),
