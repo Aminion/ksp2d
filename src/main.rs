@@ -9,7 +9,7 @@ extern crate sdl2;
 
 use fonts::{load_fonts, FontRenderer};
 use glam::{dvec2, ivec2, IVec2};
-use ksp2d::components::celestial_body::CelestialBody;
+use ksp2d::components::celestial_body::{CelestialBody, CelestialBodyType};
 use ksp2d::components::newton_body::NewtonBody;
 use ksp2d::components::rocket::Rocket;
 use ksp2d::systems::newton_body::celestial_body_system;
@@ -18,6 +18,7 @@ use ksp2d::systems::render::render_system;
 use ksp2d::systems::rocket::update_positions_system;
 use sdl2::event::WindowEvent;
 use sdl2::mixer::InitFlag;
+use sdl2::pixels::Color;
 use sdl2::render::{Canvas, TextureCreator, WindowCanvas};
 use sdl2::video::{Window, WindowContext};
 use sdl2::EventPump;
@@ -114,8 +115,8 @@ fn initial_world() -> World {
         angle: 0.0,
         angular_vel: 0.0,
         mass: 5.9722e24,
-        pos: dvec2(149597870700.0, 0.0),
-        prev_pos: dvec2(149597870700.0, 0.0),
+        pos: dvec2(149597870700.0, 149597870700.0 * 0.5),
+        prev_pos: dvec2(149597870700.0, 149597870700.0 * 0.5),
         vel: dvec2(0.0, 111111110.0),
         acc: dvec2(0.0, 0.0),
     };
@@ -130,7 +131,24 @@ fn initial_world() -> World {
         acc: dvec2(0.0, 0.0),
     };
 
-    world.extend(vec![(CelestialBody {}, pl1), (CelestialBody {}, pl2)]);
+    world.extend(vec![
+        (
+            CelestialBody {
+                b_type: CelestialBodyType::Planet,
+                radius: 6051000.0,
+                color: Color::GREEN,
+            },
+            pl1,
+        ),
+        (
+            CelestialBody {
+                b_type: CelestialBodyType::Planet,
+                radius: 6378000.0,
+                color: Color::RED,
+            },
+            pl2,
+        ),
+    ]);
     world
 }
 

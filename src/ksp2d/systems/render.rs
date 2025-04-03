@@ -60,7 +60,11 @@ pub fn render(
         font_renderer
             .render_text(
                 canvas_resources,
-                &format!("SPEED    {}\nA.SPEED {}\nIN FLIGHT", body.vel.length(), body.angular_vel),
+                &format!(
+                    "SPEED    {}\nA.SPEED {}\nIN FLIGHT",
+                    body.vel.length(),
+                    body.angular_vel
+                ),
                 vec2((window_size.0.x - 450) as f32, 0.0),
                 16.0,
                 Color::RGB(255, 0, 255),
@@ -71,11 +75,11 @@ pub fn render(
 
     let mut obj_query = <(&CelestialBody, &NewtonBody)>::query();
 
-    for (_, body) in obj_query.iter(world) {
+    for (c_body, body) in obj_query.iter(world) {
         let s = (body.pos * scale.0).as_i16vec2();
-        let _ = canvas_resources
-            .canvas
-            .circle(s.x, s.y, 5, Color::RGB(0, 255, 0));
+        let r = (c_body.radius * 2048.0 * scale.0) as i16;
+        println!("{}", r);
+        let _ = canvas_resources.canvas.circle(s.x, s.y, r, c_body.color);
     }
     font_renderer
         .render_text(
