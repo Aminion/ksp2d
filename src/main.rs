@@ -8,7 +8,7 @@ extern crate rand;
 extern crate sdl2;
 
 use fonts::{load_fonts, FontRenderer};
-use glam::{dvec2, ivec2, IVec2};
+use glam::{dvec2, ivec2, DVec2, IVec2};
 use ksp2d::components::celestial_body::{CelestialBody, CelestialBodyType};
 use ksp2d::components::newton_body::NewtonBody;
 use ksp2d::components::rocket::Rocket;
@@ -100,7 +100,7 @@ fn initial_resources(canvas: Canvas<Window>) -> Resources {
 fn initial_world() -> World {
     let mut world = World::default();
     let rocket_body = NewtonBody {
-        angle: 0.0,
+        angle: DVec2::Y,
         angular_vel: 0.0,
         mass: 2965000.0,
         pos: dvec2(149597870700.0 / 4.0, 149597870700.0),
@@ -112,7 +112,7 @@ fn initial_world() -> World {
     world.push((Rocket {}, rocket_body));
 
     let pl1 = NewtonBody {
-        angle: 0.0,
+        angle: DVec2::Y,
         angular_vel: 1.0,
         mass: 5.9722e24,
         pos: dvec2(149597870700.0, 149597870700.0 * 0.5),
@@ -122,7 +122,7 @@ fn initial_world() -> World {
     };
 
     let pl2 = NewtonBody {
-        angle: 0.0,
+        angle: DVec2::Y,
         angular_vel: 2.0,
         mass: 1.9884e30,
         pos: dvec2(149597870700.0 * 2.0, 149597870700.0),

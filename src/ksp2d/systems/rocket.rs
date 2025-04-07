@@ -41,7 +41,7 @@ pub fn update_positions(
         d_f_local.y = TRUST;
     }
 
-    let d_f_global = DVec2::from_angle(body.angle).rotate(d_f_local);
+    let d_f_global = body.angle.rotate(d_f_local);
     let d_a = d_f_global / body.mass;
     let d_v = d_a * dt.0;
     let d_p = d_v * dt.0;

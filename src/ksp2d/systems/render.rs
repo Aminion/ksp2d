@@ -33,7 +33,7 @@ pub fn render(
 
     for (_, body) in position_query.iter(world) {
         let pos_s = body.pos * scale.0;
-        let r_vec = DVec2::from_angle(body.angle);
+        let r_vec = body.angle;
         const L0: DVec2 = dvec2(-25.0, 0.0);
         let l0_t = r_vec.rotate(L0) + pos_s;
         let p0_i16 = l0_t.as_i16vec2();
@@ -77,11 +77,13 @@ pub fn render(
 
     for (c_body, body) in obj_query.iter(world) {
         let pos_scaled = body.pos * scale.0;
-        let s = pos_scaled.as_i16vec2();
         let r_scaled = c_body.radius * 2048.0 * scale.0;
         let r = r_scaled as i16;
-        let _ = canvas_resources.canvas.circle(s.x, s.y, r, c_body.color);
-        let lnn = (dvec2(0.0, r_scaled).rotate(DVec2::from_angle(body.angle))).as_i16vec2() + s;
+        let s = pos_scaled.as_i16vec2();
+        let lnn = dvec2(0.0, r_scaled).rotate(body.angle).as_i16vec2() + s;
+        let _ = canvas_resources
+            .canvas
+            .circle(s.x, s.y, r as i16, c_body.color);
         let _ = canvas_resources
             .canvas
             .line(s.x, s.y, lnn.x, lnn.y, c_body.color);
