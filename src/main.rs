@@ -34,6 +34,17 @@ pub struct Dt(f64);
 pub struct FrameTimer(Instant);
 pub struct FrameDuration(Duration);
 pub struct SpaceScale(f64);
+
+impl SpaceScale {
+    fn s_f64(&self, x: f64) -> f64 {
+        x * self.0
+    }
+
+    fn s_dvec2(&self, x: DVec2) -> DVec2 {
+        x * self.0
+    }
+}
+
 pub struct WindowSize(IVec2);
 
 const SPACE_SIZE: f64 = 4.5029e+12 / 8.0;
@@ -123,7 +134,7 @@ fn initial_world() -> World {
 
     let pl2 = NewtonBody {
         angle: DVec2::Y,
-        angular_vel: 2.0,
+        angular_vel: -2.0,
         mass: 1.9884e30,
         pos: dvec2(149597870700.0 * 2.0, 149597870700.0),
         prev_pos: dvec2(149597870700.0 * 2.0, 149597870700.0),
