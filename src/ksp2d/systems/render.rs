@@ -1,4 +1,4 @@
-use glam::{dvec2, vec2, DVec2};
+use glam::{dvec2, vec2, DVec2, I16Vec2};
 use legion::{world::SubWorld, *};
 use sdl2::{gfx::primitives::DrawRenderer, pixels::Color, render::Canvas, video::Window};
 
@@ -55,18 +55,18 @@ pub fn render(
 
 fn render_rocket(canvas: &mut Canvas<Window>, scale: &SpaceScale, _: &Rocket, n_body: &NewtonBody) {
     let pos_s = n_body.pos * scale.0;
-    let r_vec = n_body.angle;
+    #[inline]
+    fn tranaslate(x: DVec2, a: DVec2, pos: DVec2) -> I16Vec2 {
+        (x.rotate(a) + pos).as_i16vec2()
+    }
     const L0: DVec2 = dvec2(-25.0, 0.0);
-    let l0_t = r_vec.rotate(L0) + pos_s;
-    let p0_i16 = l0_t.as_i16vec2();
+    let p0_i16 = tranaslate(L0, n_body.angle, pos_s);
 
     const L1: DVec2 = dvec2(0.0, -43.3013);
-    let l1_t = r_vec.rotate(L1) + pos_s;
-    let p1_i16 = l1_t.as_i16vec2();
+    let p1_i16 = tranaslate(L1, n_body.angle, pos_s);
 
     const L2: DVec2 = dvec2(25.0, 0.0);
-    let l2_t = r_vec.rotate(L2) + pos_s;
-    let p2_i16 = l2_t.as_i16vec2();
+    let p2_i16 = tranaslate(L2, n_body.angle, pos_s);
 
     let _ = canvas.filled_trigon(
         p0_i16.x, p0_i16.y, p1_i16.x, p1_i16.y, p2_i16.x, p2_i16.y, COLOR,
