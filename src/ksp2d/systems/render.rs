@@ -10,7 +10,8 @@ use crate::{
     CanvasResources, FontRenderer, FrameDuration, FrameTimer, SpaceScale, WindowSize,
 };
 
-const COLOR: Color = Color::RGB(0, 255, 255);
+const BACKGROUD_COLOR: Color = Color::BLACK;
+const COLOR: Color = Color::CYAN;
 
 #[system]
 #[read_component(Rocket)]
@@ -26,7 +27,7 @@ pub fn render(
     #[resource] ft: &FrameTimer,
     world: &SubWorld,
 ) {
-    canvas_resources.canvas.set_draw_color(Color::RGB(0, 0, 0));
+    canvas_resources.canvas.set_draw_color(BACKGROUD_COLOR);
     canvas_resources.canvas.clear();
 
     let mut position_query = <(&Rocket, &NewtonBody)>::query();
@@ -35,7 +36,6 @@ pub fn render(
     render_rocket(&mut canvas_resources.canvas, scale, rocket, body);
 
     let mut obj_query = <(&CelestialBody, &NewtonBody)>::query();
-
     for (c_body, body) in obj_query.iter(world) {
         render_celestial_body(&mut canvas_resources.canvas, scale, c_body, body)
     }
@@ -71,13 +71,7 @@ fn render_rocket(canvas: &mut Canvas<Window>, scale: &SpaceScale, _: &Rocket, n_
     let _ = canvas.filled_trigon(
         p0_i16.x, p0_i16.y, p1_i16.x, p1_i16.y, p2_i16.x, p2_i16.y, COLOR,
     );
-    let _ = canvas.line(
-        p2_i16.x,
-        p2_i16.y,
-        p0_i16.x,
-        p0_i16.y,
-        Color::RGB(255, 0, 0),
-    );
+    let _ = canvas.line(p2_i16.x, p2_i16.y, p0_i16.x, p0_i16.y, Color::RED);
 }
 
 fn render_celestial_body(
@@ -112,7 +106,7 @@ fn render_ui(
             ),
             vec2((window_size.0.x - 450) as f32, 0.0),
             16.0,
-            Color::RGB(255, 0, 255),
+            Color::YELLOW,
             0,
         )
         .unwrap();
@@ -126,7 +120,7 @@ fn render_ui(
             ),
             vec2(0.0, 0.0),
             16.0,
-            Color::RGB(255, 0, 255),
+            Color::YELLOW,
             0,
         )
         .unwrap();

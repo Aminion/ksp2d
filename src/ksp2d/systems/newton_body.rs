@@ -1,4 +1,4 @@
-use glam::dvec2;
+use glam::DVec2;
 use legion::{world::SubWorld, *};
 
 use crate::{ksp2d::components::newton_body::NewtonBody, Dt};
@@ -15,7 +15,7 @@ pub fn celestial_body(world: &mut SubWorld, #[resource] dt: &Dt) {
 
 fn n_body_iter(objs: &mut [&mut NewtonBody], dt: &Dt) {
     for i in 0..objs.len() {
-        let mut a = dvec2(0.0, 0.0);
+        let mut a = DVec2::ZERO;
         for j in 0..objs.len() {
             if i == j {
                 continue;
