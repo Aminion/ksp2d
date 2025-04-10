@@ -123,7 +123,6 @@ fn get_system() -> Vec<(CelestialBody, NewtonBody)> {
             angular_vel: 1.0,
             mass: 1.98847e30,
             pos: DVec2::ZERO,
-            prev_pos: DVec2::ZERO,
             vel: DVec2::ZERO,
             acc: DVec2::ZERO,
         },
@@ -139,6 +138,7 @@ fn get_system() -> Vec<(CelestialBody, NewtonBody)> {
             (physical_constants::NEWTONIAN_CONSTANT_OF_GRAVITATION * star.1.mass / radius).sqrt();
 
         let velocity = DVec2::new(-position.y, position.x).normalize() * orbital_speed;
+        println!("{}", velocity.length());
 
         let planet = (
             CelestialBody {
@@ -151,7 +151,6 @@ fn get_system() -> Vec<(CelestialBody, NewtonBody)> {
                 angular_vel: 8.0,
                 mass: mass,
                 pos: position,
-                prev_pos: position,
                 vel: velocity,
                 acc: DVec2::ZERO,
             },
@@ -161,7 +160,6 @@ fn get_system() -> Vec<(CelestialBody, NewtonBody)> {
 
     for i in &mut v {
         i.1.pos += dvec2(149597870700.0, 149597870700.0);
-        i.1.prev_pos += dvec2(149597870700.0, 149597870700.0);
     }
     v
 }
@@ -173,9 +171,8 @@ fn initial_world() -> World {
         angular_vel: 0.0,
         mass: 2965000.0,
         pos: dvec2(149597870700.0 / 4.0, 149597870700.0),
-        prev_pos: dvec2(149597870700.0 / 4.0, 149597870700.0),
-        vel: dvec2(-0.0, 0.0),
-        acc: dvec2(0.0, 0.0),
+        vel: DVec2::ZERO,
+        acc: DVec2::ZERO,
     };
 
     world.push((Rocket {}, rocket_body));

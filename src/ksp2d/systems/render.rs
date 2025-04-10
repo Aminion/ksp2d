@@ -55,6 +55,7 @@ pub fn render(
 
 fn render_rocket(canvas: &mut Canvas<Window>, scale: &SpaceScale, _: &Rocket, n_body: &NewtonBody) {
     let pos_s = n_body.pos * scale.0;
+    
     #[inline]
     fn tranaslate(x: DVec2, a: DVec2, pos: DVec2) -> I16Vec2 {
         (x.rotate(a) + pos).as_i16vec2()
@@ -80,6 +81,7 @@ fn render_celestial_body(
     c_body: &CelestialBody,
     n_body: &NewtonBody,
 ) {
+    println!("{:?}", n_body.vel.length());
     let pos_scaled = scale.s_dvec2(n_body.pos);
     let r_scaled = scale.s_f64(c_body.radius) * 2048.0;
     let s = pos_scaled.as_i16vec2();
