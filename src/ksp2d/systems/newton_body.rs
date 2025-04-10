@@ -20,15 +20,25 @@ fn n_body_iter(objs: &mut [&mut NewtonBody], dt: &Dt) {
         objs[i].pos += objs[i].vel * dt.0 + 0.5 * objs[i].acc * dt.0 * dt.0;
     }
     let mut new_accelerations = vec![DVec2::ZERO; num_bodies];
+    let mut forces = vec![vec![DVec2::ZERO; num_bodies]; num_bodies]; // Store forces
+
+    // Calculate forces between all unique pairs
     for i in 0..num_bodies {
-        let mut f_a = DVec2::ZERO;
-        for j in 0..num_bodies {
-            if i == j {
-                continue;
-            }
-            f_a += gravitational_force(objs[i], objs[j]);
+        for j in (i + 1)..num_bodies {
+            let force_ij = gravitational_force(objs[i], objs[j]);
+            forces[i][j] = force_ij;
+            forces[j][i] = -force_ij; // Enforce Newton's Third Law
         }
-        new_accelerations[i] = f_a / objs[i].mass;
+    }
+
+    for i in 0..num_bodies {
+        let mut net_force = DVec2::ZERO;
+        for j in 0..num_bodies {
+            if i != j {
+                net_force += forces[i][j];
+            }
+        }
+        new_accelerations[i] = net_force / objs[i].mass;
     }
 
     for i in 0..num_bodies {
@@ -37,7 +47,7 @@ fn n_body_iter(objs: &mut [&mut NewtonBody], dt: &Dt) {
         objs[i].update_a(dt);
     }
 
-    println!("{}", calculate_energy(objs))
+   // println!("{}", calculate_energy(objs))
 }
 
 // Function to calculate the gravitational force between two bodies
