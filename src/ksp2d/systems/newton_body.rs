@@ -10,26 +10,34 @@ const G: f64 = physical_constants::NEWTONIAN_CONSTANT_OF_GRAVITATION;
 pub fn celestial_body(world: &mut SubWorld, #[resource] dt: &Dt) {
     let mut query = <&mut NewtonBody>::query();
     let mut r: Vec<&mut NewtonBody> = query.iter_mut(world).collect();
-    n_body_iter(&mut r, &Dt(dt.0 * 1000000.0));
+    n_body_iter(&mut r, dt);
 }
 
 fn n_body_iter(objs: &mut [&mut NewtonBody], dt: &Dt) {
-    for i in 0..objs.len() {
+    let num_bodies = objs.len();
+
+    for i in 0..num_bodies {
+        objs[i].pos += objs[i].vel * dt.0 + 0.5 * objs[i].acc * dt.0 * dt.0;
+    }
+    let mut new_accelerations = vec![DVec2::ZERO; num_bodies];
+    for i in 0..num_bodies {
         let mut f_a = DVec2::ZERO;
-        for j in 0..objs.len() {
+        for j in 0..num_bodies {
             if i == j {
                 continue;
             }
             f_a += gravitational_force(objs[i], objs[j]);
         }
-        objs[i].acc = f_a / objs[i].mass;
+        new_accelerations[i] = f_a / objs[i].mass;
     }
 
-    for o in objs.iter_mut() {
-        o.vel += o.acc * dt.0;
-        o.pos += o.vel * dt.0;
-        o.update_a(dt);
+    for i in 0..num_bodies {
+        objs[i].vel += 0.5 * (objs[i].acc + new_accelerations[i]) * dt.0;
+        objs[i].acc = new_accelerations[i];
+        objs[i].update_a(dt);
     }
+
+    println!("{}", calculate_energy(objs))
 }
 
 // Function to calculate the gravitational force between two bodies
@@ -42,17 +50,24 @@ pub fn gravitational_force(body1: &NewtonBody, body2: &NewtonBody) -> DVec2 {
     force_magnitude * force_direction
 }
 
-pub fn calculate_energy(particles: &[&mut NewtonBody]) -> f64 {
+pub fn calculate_energy(bodies: &[&mut NewtonBody]) -> f64 {
     let mut ke = 0.0;
     let mut pe = 0.0;
 
-    for i in 0..particles.len() {
-        let particle = &particles[i];
-        ke += 0.5 * particle.mass * particle.vel.dot(particle.vel);
-        for other_particle in particles.iter().skip(i + 1) {
-            let d = other_particle.pos - particle.pos;
-            let r_squared = d.dot(d);
-            pe -= G * particle.mass * other_particle.mass / r_squared.sqrt();
+    let num_bodies = bodies.len();
+
+    for body in bodies {
+        ke += 0.5 * body.mass * body.vel.length_squared();
+    }
+
+    // Calculate total potential energy
+    for i in 0..num_bodies {
+        for j in (i + 1)..num_bodies {
+            let r_vec = bodies[j].pos - bodies[i].pos;
+            let distance = r_vec.length();
+            if distance > f64::EPSILON * 100.0 {
+                pe -= G * bodies[i].mass * bodies[j].mass / distance;
+            }
         }
     }
 

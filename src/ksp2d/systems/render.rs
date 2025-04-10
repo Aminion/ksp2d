@@ -81,7 +81,6 @@ fn render_celestial_body(
     c_body: &CelestialBody,
     n_body: &NewtonBody,
 ) {
-    println!("{:?}", n_body.vel.length());
     let pos_scaled = scale.s_dvec2(n_body.pos);
     let r_scaled = scale.s_f64(c_body.radius) * 2048.0;
     let s = pos_scaled.as_i16vec2();
