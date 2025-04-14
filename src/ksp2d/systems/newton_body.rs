@@ -10,27 +10,27 @@ const G: f64 = physical_constants::NEWTONIAN_CONSTANT_OF_GRAVITATION;
 pub fn celestial_body(world: &mut SubWorld, #[resource] dt: &Dt) {
     let mut query = <&mut NewtonBody>::query();
     let mut r: Vec<&mut NewtonBody> = query.iter_mut(world).collect();
-    n_body_iter(&mut r, dt);
+    n_body_iter(&mut r, dt);//&Dt(3600.0)
 }
 
 fn n_body_iter(objs: &mut [&mut NewtonBody], dt: &Dt) {
+    let dt_f = dt.0;
     let num_bodies = objs.len();
 
     for i in 0..num_bodies {
-        objs[i].pos += objs[i].vel * dt.0 + 0.5 * objs[i].acc * dt.0 * dt.0;
+        objs[i].pos += objs[i].vel * dt_f + 0.5 * objs[i].acc * dt_f * dt_f;
     }
-    let mut new_accelerations = vec![DVec2::ZERO; num_bodies];
-    let mut forces = vec![vec![DVec2::ZERO; num_bodies]; num_bodies]; // Store forces
 
-    // Calculate forces between all unique pairs
+    let mut forces = vec![vec![DVec2::ZERO; num_bodies]; num_bodies];
+
     for i in 0..num_bodies {
         for j in (i + 1)..num_bodies {
             let force_ij = gravitational_force(objs[i], objs[j]);
             forces[i][j] = force_ij;
-            forces[j][i] = -force_ij; // Enforce Newton's Third Law
+            forces[j][i] = -force_ij;
         }
     }
-
+    let mut new_accelerations = vec![DVec2::ZERO; num_bodies];
     for i in 0..num_bodies {
         let mut net_force = DVec2::ZERO;
         for j in 0..num_bodies {
@@ -42,15 +42,14 @@ fn n_body_iter(objs: &mut [&mut NewtonBody], dt: &Dt) {
     }
 
     for i in 0..num_bodies {
-        objs[i].vel += 0.5 * (objs[i].acc + new_accelerations[i]) * dt.0;
+        objs[i].vel += 0.5 * (objs[i].acc + new_accelerations[i]) * dt_f;
         objs[i].acc = new_accelerations[i];
         objs[i].update_a(dt);
     }
 
-   // println!("{}", calculate_energy(objs))
+     println!("{}", calculate_energy(objs))
 }
 
-// Function to calculate the gravitational force between two bodies
 pub fn gravitational_force(body1: &NewtonBody, body2: &NewtonBody) -> DVec2 {
     let r_vec = body2.pos - body1.pos;
     let r_sq = r_vec.length_squared();
@@ -70,7 +69,6 @@ pub fn calculate_energy(bodies: &[&mut NewtonBody]) -> f64 {
         ke += 0.5 * body.mass * body.vel.length_squared();
     }
 
-    // Calculate total potential energy
     for i in 0..num_bodies {
         for j in (i + 1)..num_bodies {
             let r_vec = bodies[j].pos - bodies[i].pos;

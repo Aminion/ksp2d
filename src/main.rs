@@ -138,8 +138,6 @@ fn get_system() -> Vec<(CelestialBody, NewtonBody)> {
             (physical_constants::NEWTONIAN_CONSTANT_OF_GRAVITATION * star.1.mass / radius).sqrt();
 
         let velocity = DVec2::new(-position.y, position.x).normalize() * orbital_speed;
-        println!("{}", velocity.length());
-
         let planet = (
             CelestialBody {
                 b_type: CelestialBodyType::Planet,

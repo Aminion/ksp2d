@@ -10,7 +10,6 @@ pub struct NewtonBody {
     pub vel: DVec2,
     pub angle: DVec2,
     pub angular_vel: f64,
-
 }
 
 impl NewtonBody {

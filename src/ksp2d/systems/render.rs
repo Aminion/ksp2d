@@ -55,7 +55,7 @@ pub fn render(
 
 fn render_rocket(canvas: &mut Canvas<Window>, scale: &SpaceScale, _: &Rocket, n_body: &NewtonBody) {
     let pos_s = n_body.pos * scale.0;
-    
+
     #[inline]
     fn tranaslate(x: DVec2, a: DVec2, pos: DVec2) -> I16Vec2 {
         (x.rotate(a) + pos).as_i16vec2()
