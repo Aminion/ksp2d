@@ -7,7 +7,7 @@ use crate::{
         components::{celestial_body::CelestialBody, newton_body::NewtonBody, rocket::Rocket},
         systems::performance_info::PerformanceInfo,
     },
-    CanvasResources, FontRenderer, FrameDuration, FrameTimer, SpaceScale, WindowSize,
+    CanvasResources, FontRenderer, FrameDuration, FrameTimer, SpacePadding, SpaceScale, WindowSize,
 };
 
 const BACKGROUD_COLOR: Color = Color::BLACK;
@@ -20,6 +20,7 @@ const COLOR: Color = Color::CYAN;
 pub fn render(
     #[resource] canvas_resources: &mut CanvasResources,
     #[resource] scale: &SpaceScale,
+    #[resource] padding: &SpacePadding,
     #[resource] window_size: &WindowSize,
     #[resource] font_renderer: &mut FontRenderer<1>,
     #[resource] performance_info: &PerformanceInfo,
@@ -33,11 +34,11 @@ pub fn render(
     let mut position_query = <(&Rocket, &NewtonBody)>::query();
 
     let (rocket, body) = position_query.iter(world).last().unwrap();
-    render_rocket(&mut canvas_resources.canvas, scale, rocket, body);
+    render_rocket(&mut canvas_resources.canvas, scale, padding, rocket, body);
 
     let mut obj_query = <(&CelestialBody, &NewtonBody)>::query();
     for (c_body, body) in obj_query.iter(world) {
-        render_celestial_body(&mut canvas_resources.canvas, scale, c_body, body)
+        render_celestial_body(&mut canvas_resources.canvas, scale, padding, c_body, body)
     }
 
     render_ui(
@@ -53,21 +54,27 @@ pub fn render(
     canvas_resources.canvas.present();
 }
 
-fn render_rocket(canvas: &mut Canvas<Window>, scale: &SpaceScale, _: &Rocket, n_body: &NewtonBody) {
+fn render_rocket(
+    canvas: &mut Canvas<Window>,
+    scale: &SpaceScale,
+    padding: &SpacePadding,
+    _: &Rocket,
+    n_body: &NewtonBody,
+) {
     let pos_s = n_body.pos * scale.0;
 
     #[inline]
-    fn tranaslate(x: DVec2, a: DVec2, pos: DVec2) -> I16Vec2 {
-        (x.rotate(a) + pos).as_i16vec2()
+    fn tranaslate(padding: &SpacePadding, x: DVec2, a: DVec2, pos: DVec2) -> I16Vec2 {
+        (x.rotate(a) + pos).as_i16vec2() + padding.0
     }
     const L0: DVec2 = dvec2(-25.0, 0.0);
-    let p0_i16 = tranaslate(L0, n_body.angle, pos_s);
+    let p0_i16 = tranaslate(padding, L0, n_body.angle, pos_s);
 
     const L1: DVec2 = dvec2(0.0, -43.3013);
-    let p1_i16 = tranaslate(L1, n_body.angle, pos_s);
+    let p1_i16 = tranaslate(padding, L1, n_body.angle, pos_s);
 
     const L2: DVec2 = dvec2(25.0, 0.0);
-    let p2_i16 = tranaslate(L2, n_body.angle, pos_s);
+    let p2_i16 = tranaslate(padding, L2, n_body.angle, pos_s);
 
     let _ = canvas.filled_trigon(
         p0_i16.x, p0_i16.y, p1_i16.x, p1_i16.y, p2_i16.x, p2_i16.y, COLOR,
@@ -78,12 +85,13 @@ fn render_rocket(canvas: &mut Canvas<Window>, scale: &SpaceScale, _: &Rocket, n_
 fn render_celestial_body(
     canvas: &mut Canvas<Window>,
     scale: &SpaceScale,
+    padding: &SpacePadding,
     c_body: &CelestialBody,
     n_body: &NewtonBody,
 ) {
     let pos_scaled = scale.s_dvec2(n_body.pos);
-    let r_scaled = scale.s_f64(c_body.radius) * 2048.0;
-    let s = pos_scaled.as_i16vec2();
+    let r_scaled = scale.s_f64(c_body.radius);
+    let s = pos_scaled.as_i16vec2() + padding.0;
     let lnn = dvec2(0.0, r_scaled).rotate(n_body.angle).as_i16vec2() + s;
     let _ = canvas.circle(s.x, s.y, r_scaled as i16, c_body.color);
     let _ = canvas.line(s.x, s.y, lnn.x, lnn.y, c_body.color);

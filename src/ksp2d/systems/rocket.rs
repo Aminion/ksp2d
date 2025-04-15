@@ -18,7 +18,7 @@ pub fn update_positions(
     #[resource] input: &HashSet<PlayerInput>,
 ) {
     const ANGLE_SPD: f64 = std::f64::consts::FRAC_PI_8;
-    const TRUST: f64 = 34343000000000000.0;
+    const TRUST: f64 = 343430000000000.0;
 
     if input.contains(&PlayerInput::RotateRight) {
         body.angular_vel += ANGLE_SPD * dt.0;

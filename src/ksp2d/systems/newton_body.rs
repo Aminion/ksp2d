@@ -47,7 +47,7 @@ fn n_body_iter(objs: &mut [&mut NewtonBody], dt: &Dt) {
         objs[i].update_a(dt);
     }
 
-     println!("{}", calculate_energy(objs))
+    // println!("{}", calculate_energy(objs))
 }
 
 pub fn gravitational_force(body1: &NewtonBody, body2: &NewtonBody) -> DVec2 {

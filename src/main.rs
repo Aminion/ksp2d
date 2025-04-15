@@ -8,7 +8,7 @@ extern crate rand;
 extern crate sdl2;
 
 use fonts::{load_fonts, FontRenderer};
-use glam::{dvec2, ivec2, DVec2, IVec2};
+use glam::{dvec2, ivec2, DVec2, I16Vec2, IVec2};
 use ksp2d::components::celestial_body::{CelestialBody, CelestialBodyType};
 use ksp2d::components::newton_body::NewtonBody;
 use ksp2d::components::rocket::Rocket;
@@ -36,6 +36,8 @@ pub struct FrameTimer(Instant);
 pub struct FrameDuration(Duration);
 pub struct SpaceScale(f64);
 
+pub struct SpacePadding(I16Vec2);
+
 impl SpaceScale {
     fn s_f64(&self, x: f64) -> f64 {
         x * self.0
@@ -48,7 +50,9 @@ impl SpaceScale {
 
 pub struct WindowSize(IVec2);
 
-const SPACE_SIZE: f64 = 4.5029e+12 / 8.0;
+const SPACE_SIZE: f64 = 4.5029e+12 / 512.0;
+const INITIAL_WINDOW_WIDTH: u32 = 1280;
+const INITIAL_WINDOW_HEIGHT: u32 = 720;
 
 pub struct CanvasResources {
     pub canvas: Canvas<Window>,
@@ -65,7 +69,7 @@ fn initialize() -> Result<(WindowCanvas, EventPump), String> {
     sdl2::mixer::allocate_channels(20);
 
     let window = video_subsystem
-        .window("KSP 2D", 1280, 720)
+        .window("KSP 2D", INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT)
         .resizable()
         .position_centered()
         .build()
@@ -101,22 +105,32 @@ fn initial_resources(canvas: Canvas<Window>) -> Resources {
     resources.insert(perf_info);
     resources.insert(font_renderer);
     resources.insert(HashSet::<PlayerInput>::new());
-    resources.insert(SpaceScale(1280.0 / SPACE_SIZE));
-    resources.insert(WindowSize(ivec2(1280, 720)));
+
+    let initial_size = ivec2(INITIAL_WINDOW_WIDTH as i32, INITIAL_WINDOW_HEIGHT as i32);
+    let (a, b) = get_scaling(initial_size.x, initial_size.y);
+    resources.insert(SpaceScale(a));
+    resources.insert(WindowSize(initial_size));
+    resources.insert(SpacePadding(b));
     resources.insert(FrameTimer(Instant::now()));
     resources.insert(FrameDuration(Duration::ZERO));
     resources.insert(Dt(0.0));
     resources
 }
 
-fn get_system() -> Vec<(CelestialBody, NewtonBody)> {
+fn get_system(
+    planets_count: usize,
+    mass_min: f64,
+    mass_max: f64,
+    radius_min: f64,
+    radius_max: f64,
+) -> Vec<(CelestialBody, NewtonBody)> {
     let mut v: Vec<(CelestialBody, NewtonBody)> = Vec::new();
     let mut rng = rand::rng();
     let star = (
         CelestialBody {
             b_type: CelestialBodyType::Star,
             color: Color::YELLOW,
-            radius: 6.95700e6,
+            radius: 696340000.0,
         },
         NewtonBody {
             angle: DVec2::Y,
@@ -129,9 +143,12 @@ fn get_system() -> Vec<(CelestialBody, NewtonBody)> {
     );
     v.push(star);
 
-    for _ in 0..3 {
-        let mass = 2965000.0;
-        let radius = 149597870700.0 / 2.0;
+    let mut orb = star.0.radius * 2.0;
+
+    for _ in 0..planets_count {
+        let mass = rng.random_range(mass_min..mass_max);
+        orb += rng.random_range(radius_min..radius_max);
+        let radius = orb;
         let angle = rng.random_range(0.0..2.0 * std::f64::consts::PI);
         let position = DVec2::from_angle(angle) * radius;
         let orbital_speed =
@@ -142,7 +159,7 @@ fn get_system() -> Vec<(CelestialBody, NewtonBody)> {
             CelestialBody {
                 b_type: CelestialBodyType::Planet,
                 color: Color::GREEN,
-                radius: 6051000.0,
+                radius: 400000000.0,
             },
             NewtonBody {
                 angle: DVec2::Y,
@@ -157,7 +174,7 @@ fn get_system() -> Vec<(CelestialBody, NewtonBody)> {
     }
 
     for i in &mut v {
-        i.1.pos += dvec2(149597870700.0, 149597870700.0);
+        i.1.pos += dvec2(SPACE_SIZE / 2.0, SPACE_SIZE / 2.0);
     }
     v
 }
@@ -168,13 +185,13 @@ fn initial_world() -> World {
         angle: DVec2::Y,
         angular_vel: 0.0,
         mass: 2965000.0,
-        pos: dvec2(149597870700.0 / 4.0, 149597870700.0),
+        pos: dvec2(SPACE_SIZE / 4.0, SPACE_SIZE / 4.0),
         vel: DVec2::ZERO,
         acc: DVec2::ZERO,
     };
 
     world.push((Rocket {}, rocket_body));
-    let sys = get_system();
+    let sys = get_system(3, 3.30104e23, 1898.6e24, 24397000.0, 142800000.0);
     world.extend(sys);
     world
 }
@@ -243,13 +260,18 @@ pub fn main() {
                         }
                     }
                     Event::Window {
-                        win_event: WindowEvent::SizeChanged(x, y),
+                        win_event: WindowEvent::Resized(x, y),
                         ..
                     } => {
+                        let (a, b) = get_scaling(x, y);
+                        println!("{} {} {} {}", x, y, a, b);
                         let mut r = resources.get_mut::<SpaceScale>().unwrap();
                         let mut z = resources.get_mut::<WindowSize>().unwrap();
-                        r.0 = x.max(y) as f64 / SPACE_SIZE;
+                        let mut e = resources.get_mut::<SpacePadding>().unwrap();
+
+                        r.0 = a;
                         z.0 = ivec2(x, y);
+                        e.0 = b;
                     }
                     _ => {}
                 }
@@ -257,5 +279,20 @@ pub fn main() {
         }
 
         schedule.execute(&mut world, &mut resources);
+    }
+}
+
+fn get_scaling(x: i32, y: i32) -> (f64, I16Vec2) {
+    let x_f = x as f64;
+    let y_f = y as f64;
+    fn padding(a: f64, b: f64) -> i16 {
+        ((a - b) * 0.5) as i16
+    }
+    if x > y {
+        (y_f / SPACE_SIZE, I16Vec2::new(padding(x_f, y_f), 0))
+    } else if y < x {
+        (x_f / SPACE_SIZE, I16Vec2::new(0, padding(y_f, x_f)))
+    } else {
+        (x_f / SPACE_SIZE, I16Vec2::ZERO)
     }
 }
