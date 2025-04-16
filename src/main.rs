@@ -124,8 +124,10 @@ fn get_system(
     radius_min: f64,
     radius_max: f64,
 ) -> Vec<(CelestialBody, NewtonBody)> {
-    let mut v: Vec<(CelestialBody, NewtonBody)> = Vec::new();
+    let mut v: Vec<(CelestialBody, NewtonBody)> = Vec::with_capacity(planets_count);
     let mut rng = rand::rng();
+    let half_space = SPACE_SIZE / 2.0;
+    let system_center = dvec2(half_space, half_space);
     let star = (
         CelestialBody {
             b_type: CelestialBodyType::Star,
@@ -136,7 +138,7 @@ fn get_system(
             angle: DVec2::Y,
             angular_vel: 1.0,
             mass: 1.98847e30,
-            pos: DVec2::ZERO,
+            pos: system_center,
             vel: DVec2::ZERO,
             acc: DVec2::ZERO,
         },
@@ -150,7 +152,7 @@ fn get_system(
         orb += rng.random_range(radius_min..radius_max);
         let radius = orb;
         let angle = rng.random_range(0.0..2.0 * std::f64::consts::PI);
-        let position = DVec2::from_angle(angle) * radius;
+        let position = DVec2::from_angle(angle) * radius + system_center;
         let orbital_speed =
             (physical_constants::NEWTONIAN_CONSTANT_OF_GRAVITATION * star.1.mass / radius).sqrt();
 
@@ -171,10 +173,6 @@ fn get_system(
             },
         );
         v.push(planet);
-    }
-
-    for i in &mut v {
-        i.1.pos += dvec2(SPACE_SIZE / 2.0, SPACE_SIZE / 2.0);
     }
     v
 }
