@@ -1,5 +1,6 @@
 pub mod fonts;
 pub mod ksp2d;
+pub mod system_generation;
 
 extern crate crossbeam;
 extern crate glam;
@@ -26,6 +27,7 @@ use sdl2::EventPump;
 use sdl2::{event::Event, keyboard::Scancode};
 use std::collections::HashSet;
 use std::time::{Duration, Instant};
+use system_generation::get_system;
 
 use legion::*;
 
@@ -50,7 +52,7 @@ impl SpaceScale {
 
 pub struct WindowSize(IVec2);
 
-const SPACE_SIZE: f64 = 4.5029e+12 / 512.0;
+const SPACE_SIZE: f64 = 1e10;                 
 const INITIAL_WINDOW_WIDTH: u32 = 1280;
 const INITIAL_WINDOW_HEIGHT: u32 = 720;
 
@@ -117,79 +119,19 @@ fn initial_resources(canvas: Canvas<Window>) -> Resources {
     resources
 }
 
-fn get_system(
-    planets_count: usize,
-    mass_min: f64,
-    mass_max: f64,
-    radius_min: f64,
-    radius_max: f64,
-) -> Vec<(CelestialBody, NewtonBody)> {
-    let mut v: Vec<(CelestialBody, NewtonBody)> = Vec::with_capacity(planets_count);
-    let mut rng = rand::rng();
-    let half_space = SPACE_SIZE / 2.0;
-    let system_center = dvec2(half_space, half_space);
-    let star = (
-        CelestialBody {
-            b_type: CelestialBodyType::Star,
-            color: Color::YELLOW,
-            radius: 696340000.0,
-        },
-        NewtonBody {
-            angle: DVec2::Y,
-            angular_vel: 1.0,
-            mass: 1.98847e30,
-            pos: system_center,
-            vel: DVec2::ZERO,
-            acc: DVec2::ZERO,
-        },
-    );
-    v.push(star);
-
-    let mut orb = star.0.radius * 2.0;
-
-    for _ in 0..planets_count {
-        let mass = rng.random_range(mass_min..mass_max);
-        orb += rng.random_range(radius_min..radius_max);
-        let radius = orb;
-        let angle = rng.random_range(0.0..2.0 * std::f64::consts::PI);
-        let position = DVec2::from_angle(angle) * radius + system_center;
-        let orbital_speed =
-            (physical_constants::NEWTONIAN_CONSTANT_OF_GRAVITATION * star.1.mass / radius).sqrt();
-
-        let velocity = DVec2::new(-position.y, position.x).normalize() * orbital_speed;
-        let planet = (
-            CelestialBody {
-                b_type: CelestialBodyType::Planet,
-                color: Color::GREEN,
-                radius: 400000000.0,
-            },
-            NewtonBody {
-                angle: DVec2::Y,
-                angular_vel: 8.0,
-                mass: mass,
-                pos: position,
-                vel: velocity,
-                acc: DVec2::ZERO,
-            },
-        );
-        v.push(planet);
-    }
-    v
-}
-
 fn initial_world() -> World {
     let mut world = World::default();
     let rocket_body = NewtonBody {
         angle: DVec2::Y,
         angular_vel: 0.0,
         mass: 2965000.0,
-        pos: dvec2(SPACE_SIZE / 4.0, SPACE_SIZE / 4.0),
+        pos: dvec2(SPACE_SIZE / 8.0, SPACE_SIZE / 8.0),
         vel: DVec2::ZERO,
         acc: DVec2::ZERO,
     };
 
     world.push((Rocket {}, rocket_body));
-    let sys = get_system(3, 3.30104e23, 1898.6e24, 24397000.0, 142800000.0);
+    let sys = get_system(SPACE_SIZE * 0.5);
     world.extend(sys);
     world
 }
