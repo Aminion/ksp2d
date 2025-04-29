@@ -52,7 +52,7 @@ impl SpaceScale {
 
 pub struct WindowSize(IVec2);
 
-const SPACE_SIZE: f64 = 1e10;                 
+const SPACE_SIZE: f64 = 1e10;
 const INITIAL_WINDOW_WIDTH: u32 = 1280;
 const INITIAL_WINDOW_HEIGHT: u32 = 720;
 
