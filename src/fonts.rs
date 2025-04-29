@@ -52,7 +52,7 @@ impl<const N: usize> FontRenderer<N> {
 }
 
 pub fn load_fonts() -> [Font; 1] {
-    let font_data = include_bytes!("../../../truetype/OpenSans-Regular.ttf") as &[u8];
+    let font_data = include_bytes!("../truetype/OpenSans-Regular.ttf") as &[u8];
     let font = Font::from_bytes(font_data, FontSettings::default()).expect("Failed to load font");
     [font]
 }
