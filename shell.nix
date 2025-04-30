@@ -7,11 +7,7 @@ in pkgs.stdenv.mkDerivation rec {
 
   buildInputs = with pkgs; [
     llvm_19
-    cargo
-    rustc
-    rustfmt
-    rust-analyzer
-    clippy
+    rustup
     SDL2
     SDL2_mixer
     SDL2_gfx
