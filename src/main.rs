@@ -202,15 +202,14 @@ pub fn main() {
                         win_event: WindowEvent::Resized(x, y),
                         ..
                     } => {
-                        let (a, b) = get_scaling(x, y);
-                        println!("{} {} {} {}", x, y, a, b);
-                        let mut r = resources.get_mut::<SpaceScale>().unwrap();
-                        let mut z = resources.get_mut::<WindowSize>().unwrap();
-                        let mut e = resources.get_mut::<SpacePadding>().unwrap();
+                        let (scale, padding) = get_scaling(x, y);
+                        let mut space_scale = resources.get_mut::<SpaceScale>().unwrap();
+                        let mut window_size = resources.get_mut::<WindowSize>().unwrap();
+                        let mut space_padding = resources.get_mut::<SpacePadding>().unwrap();
 
-                        r.0 = a;
-                        z.0 = ivec2(x, y);
-                        e.0 = b;
+                        space_scale.0 = scale;
+                        window_size.0 = ivec2(x, y);
+                        space_padding.0 = padding;
                     }
                     _ => {}
                 }
