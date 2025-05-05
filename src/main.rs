@@ -10,17 +10,14 @@ extern crate sdl2;
 
 use fonts::{load_fonts, FontRenderer};
 use glam::{dvec2, ivec2, DVec2, I16Vec2, IVec2};
-use ksp2d::components::celestial_body::{CelestialBody, CelestialBodyType};
 use ksp2d::components::newton_body::NewtonBody;
 use ksp2d::components::rocket::Rocket;
 use ksp2d::systems::newton_body::celestial_body_system;
 use ksp2d::systems::performance_info::{update_info_system, PerformanceInfo};
 use ksp2d::systems::render::render_system;
 use ksp2d::systems::rocket::update_positions_system;
-use rand::Rng;
 use sdl2::event::WindowEvent;
 use sdl2::mixer::InitFlag;
-use sdl2::pixels::Color;
 use sdl2::render::{Canvas, TextureCreator, WindowCanvas};
 use sdl2::video::{Window, WindowContext};
 use sdl2::EventPump;
@@ -28,6 +25,8 @@ use sdl2::{event::Event, keyboard::Scancode};
 use std::collections::HashSet;
 use std::time::{Duration, Instant};
 use system_generation::get_system;
+
+use std::cmp::Ordering;
 
 use legion::*;
 
@@ -225,14 +224,19 @@ pub fn main() {
 fn get_scaling(x: i32, y: i32) -> (f64, I16Vec2) {
     let x_f = x as f64;
     let y_f = y as f64;
+    #[inline]
     fn padding(a: f64, b: f64) -> i16 {
         ((a - b) * 0.5) as i16
     }
-    if x > y {
-        (y_f / SPACE_SIZE, I16Vec2::new(padding(x_f, y_f), 0))
-    } else if y < x {
-        (x_f / SPACE_SIZE, I16Vec2::new(0, padding(y_f, x_f)))
-    } else {
-        (x_f / SPACE_SIZE, I16Vec2::ZERO)
+    match x.cmp(&y) {
+        Ordering::Greater => (y_f / SPACE_SIZE, {
+            let x = padding(x_f, y_f);
+            I16Vec2 { x, y: 0 }
+        }),
+        Ordering::Less => (x_f / SPACE_SIZE, {
+            let y = padding(y_f, x_f);
+            I16Vec2 { x: 0, y }
+        }),
+        _ => (x_f / SPACE_SIZE, I16Vec2::ZERO),
     }
 }

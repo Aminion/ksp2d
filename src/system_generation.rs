@@ -80,6 +80,5 @@ pub fn get_system(system_radius: f64) -> Vec<(CelestialBody, NewtonBody)> {
 fn calculate_radius(mass: f64, density: f64) -> f64 {
     let volume = mass / density;
     let radius_cubed = (3.0 * volume) / (4.0 * PI);
-    let radius = radius_cubed.cbrt();
-    radius
+    radius_cubed.cbrt()
 }
