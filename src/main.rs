@@ -23,6 +23,7 @@ use sdl2::render::{Canvas, TextureCreator, WindowCanvas};
 use sdl2::video::{Window, WindowContext};
 use sdl2::EventPump;
 use sdl2::{event::Event, keyboard::Scancode};
+use systems::CommandBuffer;
 use std::collections::HashSet;
 use std::time::{Duration, Instant};
 use system_generation::get_system;
@@ -88,7 +89,7 @@ fn initialize() -> Result<(WindowCanvas, EventPump), String> {
     Ok((canvas, event_pump))
 }
 
-fn initial_resources(canvas: Canvas<Window>) -> Resources {
+fn initial_resources(canvas: Canvas<Window>, world: &World) -> Resources {
     let mut resources = Resources::default();
     let texture_creator = canvas.texture_creator();
 
@@ -116,6 +117,9 @@ fn initial_resources(canvas: Canvas<Window>) -> Resources {
     resources.insert(FrameTimer(Instant::now()));
     resources.insert(FrameDuration(Duration::ZERO));
     resources.insert(Dt(0.0));
+
+    let command_buffer = CommandBuffer::new(&world);
+    resources.insert(command_buffer);
     resources
 }
 
@@ -141,8 +145,8 @@ pub fn main() {
     std::env::set_var("RUST_BACKTRACE", "1");
     env_logger::init();
     let (canvas, mut event_pump) = initialize().unwrap();
-    let mut resources = initial_resources(canvas);
     let mut world = initial_world();
+    let mut resources = initial_resources(canvas, &world);
     let mut schedule = Schedule::builder()
         .add_system(update_positions_system())
         .add_system(celestial_body_system())
