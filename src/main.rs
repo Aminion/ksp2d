@@ -12,9 +12,10 @@ use fonts::{load_fonts, FontRenderer};
 use glam::{dvec2, ivec2, DVec2, I16Vec2, IVec2};
 use ksp2d::components::newton_body::NewtonBody;
 use ksp2d::components::rocket::Rocket;
-use ksp2d::systems::landing::{landing, landing_system};
+use ksp2d::systems::landing::landing_system;
 use ksp2d::systems::newton_body::celestial_body_system;
 use ksp2d::systems::performance_info::{update_info_system, PerformanceInfo};
+use ksp2d::systems::planet_resting::planet_resting_system;
 use ksp2d::systems::render::render_system;
 use ksp2d::systems::rocket::update_positions_system;
 use sdl2::event::WindowEvent;
@@ -152,6 +153,7 @@ pub fn main() {
         .add_system(celestial_body_system())
         .add_system(update_info_system())
         .add_system(landing_system())
+        .add_system(planet_resting_system())
         .flush()
         .add_thread_local(render_system())
         .build();

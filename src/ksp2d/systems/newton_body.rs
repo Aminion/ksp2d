@@ -1,16 +1,19 @@
 use glam::DVec2;
 use legion::{world::SubWorld, *};
 
-use crate::{ksp2d::components::newton_body::NewtonBody, Dt};
+use crate::{
+    ksp2d::components::{landing::LandingRelation, newton_body::NewtonBody},
+    Dt,
+};
 
 const G: f64 = physical_constants::NEWTONIAN_CONSTANT_OF_GRAVITATION;
 
 #[system]
 #[write_component(NewtonBody)]
 pub fn celestial_body(world: &mut SubWorld, #[resource] dt: &Dt) {
-    let mut query = <&mut NewtonBody>::query();
+    let mut query = <&mut NewtonBody>::query().filter(!component::<LandingRelation>());
     let mut r: Vec<&mut NewtonBody> = query.iter_mut(world).collect();
-    n_body_iter(&mut r, dt);//&Dt(3600.0)
+    n_body_iter(&mut r, dt); //&Dt(3600.0)
 }
 
 fn n_body_iter(objs: &mut [&mut NewtonBody], dt: &Dt) {
