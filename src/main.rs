@@ -24,10 +24,11 @@ use sdl2::render::{Canvas, TextureCreator, WindowCanvas};
 use sdl2::video::{Window, WindowContext};
 use sdl2::EventPump;
 use sdl2::{event::Event, keyboard::Scancode};
-use systems::CommandBuffer;
+use std::borrow::Borrow;
 use std::collections::HashSet;
 use std::time::{Duration, Instant};
 use system_generation::get_system;
+use systems::CommandBuffer;
 
 use std::cmp::Ordering;
 
@@ -53,6 +54,12 @@ impl SpaceScale {
 }
 
 pub struct WindowSize(IVec2);
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum CameraMode {
+    Default,
+    Landing,
+}
 
 const SPACE_SIZE: f64 = 1e10;
 const INITIAL_WINDOW_WIDTH: u32 = 1280;
@@ -118,8 +125,9 @@ fn initial_resources(canvas: Canvas<Window>, world: &World) -> Resources {
     resources.insert(FrameTimer(Instant::now()));
     resources.insert(FrameDuration(Duration::ZERO));
     resources.insert(Dt(0.0));
+    resources.insert(CameraMode::Default);
 
-    let command_buffer = CommandBuffer::new(&world);
+    let command_buffer = CommandBuffer::new(world);
     resources.insert(command_buffer);
     resources
 }
@@ -173,6 +181,18 @@ pub fn main() {
                         ..
                     } => break 'running,
                     Event::KeyDown {
+                        scancode: Some(Scancode::C),
+                        ..
+                    } => {
+                        let mut camera_mode_res = resources.get_mut::<CameraMode>().unwrap();
+                        let new_mode = if *camera_mode_res == CameraMode::Default {
+                            CameraMode::Landing
+                        } else {
+                            CameraMode::Default
+                        };
+                        *camera_mode_res = new_mode;
+                    }
+                    Event::KeyDown {
                         scancode: Some(code),
                         ..
                     } => {
@@ -183,6 +203,7 @@ pub fn main() {
                             Scancode::S => Some(PlayerInput::MoveBackward),
                             Scancode::Q => Some(PlayerInput::RotateLeft),
                             Scancode::E => Some(PlayerInput::RotateRight),
+                            Scancode::C => Some(PlayerInput::SwitchCamera),
                             _ => None,
                         };
                         if let Some(player_input) = insertion {
@@ -200,6 +221,7 @@ pub fn main() {
                             Scancode::S => Some(&PlayerInput::MoveBackward),
                             Scancode::Q => Some(&PlayerInput::RotateLeft),
                             Scancode::E => Some(&PlayerInput::RotateRight),
+                            Scancode::C => Some(&PlayerInput::SwitchCamera),
                             _ => None,
                         };
                         if let Some(player_input) = insertion {
