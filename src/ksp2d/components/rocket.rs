@@ -10,5 +10,5 @@ pub enum PlayerInput {
     RotateLeft,
     RotateRight,
     WindowResize(i32, i32),
-    SwitchCamera
+    SwitchCamera,
 }

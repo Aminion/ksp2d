@@ -11,4 +11,4 @@ pub struct CelestialBody {
     pub b_type: CelestialBodyType,
     pub radius: f64,
     pub color: Color,
-} 
+}
