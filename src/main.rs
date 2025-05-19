@@ -10,6 +10,7 @@ extern crate sdl2;
 
 use fonts::{load_fonts, FontRenderer};
 use glam::{dvec2, ivec2, DVec2, I16Vec2, IVec2};
+use ksp2d::components::closest_celestial_body::ClosestCelestialBody;
 use ksp2d::components::newton_body::NewtonBody;
 use ksp2d::components::rocket::Rocket;
 use ksp2d::systems::landing::landing_system;
@@ -143,9 +144,14 @@ fn initial_world() -> World {
         acc: DVec2::ZERO,
     };
 
-    world.push((Rocket {}, rocket_body));
     let sys = get_system(SPACE_SIZE * 0.5);
-    world.extend(sys);
+    let first_celestial = world.extend(sys);
+    let first_celestial_enity = *first_celestial.first().unwrap();
+    world.push((
+        Rocket {},
+        rocket_body,
+        ClosestCelestialBody(first_celestial_enity),
+    ));
     world
 }
 
