@@ -9,8 +9,8 @@ use crate::{
 };
 
 #[system(for_each)]
-#[read_component(Rocket)]
 #[write_component(NewtonBody)]
+#[read_component(Rocket)]
 pub fn update_positions(
     _rocket: &Rocket,
     body: &mut NewtonBody,

@@ -119,10 +119,8 @@ fn initial_resources(canvas: Canvas<Window>, world: &World) -> Resources {
     resources.insert(HashSet::<PlayerInput>::new());
 
     let initial_size = ivec2(INITIAL_WINDOW_WIDTH as i32, INITIAL_WINDOW_HEIGHT as i32);
-    let (a, b) = get_scaling(initial_size.x, initial_size.y);
-    resources.insert(SpaceScale(a));
+
     resources.insert(WindowSize(initial_size));
-    resources.insert(SpacePadding(b));
     resources.insert(FrameTimer(Instant::now()));
     resources.insert(FrameDuration(Duration::ZERO));
     resources.insert(Dt(0.0));
@@ -239,14 +237,8 @@ pub fn main() {
                         win_event: WindowEvent::Resized(x, y),
                         ..
                     } => {
-                        let (scale, padding) = get_scaling(x, y);
-                        let mut space_scale = resources.get_mut::<SpaceScale>().unwrap();
                         let mut window_size = resources.get_mut::<WindowSize>().unwrap();
-                        let mut space_padding = resources.get_mut::<SpacePadding>().unwrap();
-
-                        space_scale.0 = scale;
                         window_size.0 = ivec2(x, y);
-                        space_padding.0 = padding;
                     }
                     _ => {}
                 }
