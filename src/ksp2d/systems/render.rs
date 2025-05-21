@@ -6,7 +6,7 @@ use sdl2::{
     gfx::primitives::DrawRenderer,
     pixels::Color,
     rect::Rect,
-    render::{Canvas, Texture, TextureAccess},
+    render::{Canvas, TextureAccess},
     video::Window,
 };
 
@@ -15,8 +15,7 @@ use crate::{
         components::{celestial_body::CelestialBody, newton_body::NewtonBody, rocket::Rocket},
         systems::performance_info::PerformanceInfo,
     },
-    CameraMode, CanvasResources, FontRenderer, FrameDuration, FrameTimer, SpacePadding, SpaceScale,
-    WindowSize, SPACE_SIZE,
+    CameraMode, CanvasResources, FontRenderer, FrameDuration, FrameTimer, WindowSize, SPACE_SIZE,
 };
 
 const BACKGROUD_COLOR: Color = Color::BLACK;
@@ -39,14 +38,12 @@ pub fn render(
     canvas_resources.canvas.set_draw_color(BACKGROUD_COLOR);
     canvas_resources.canvas.clear();
 
-    let (scale_, padding_) = get_scaling(window_size.0.x, window_size.0.y);
-    let scale = SpaceScale(scale_);
-    let padding = &SpacePadding(padding_);
-
     let camera_mode = CameraMode::Default;
-    let t_mtx = match camera_mode {
+    let (tex, padded) = get_space_rect(window_size.0.x, window_size.0.y);
+    let scale = tex.width() as f64 / SPACE_SIZE;
+    let srt_mtx = match camera_mode {
         CameraMode::Default => {
-            let scale_mtx = DMat3::from_diagonal(DVec3::new(scale_, scale_, 1.0));
+            let scale_mtx = DMat3::from_diagonal(DVec3::new(scale, scale, 1.0));
             let rotate_mtx = DMat3::IDENTITY;
             let transform_mtx = DMat3::IDENTITY;
             let mtx = scale_mtx * rotate_mtx * transform_mtx;
@@ -55,37 +52,31 @@ pub fn render(
         CameraMode::Landing => DMat3::ZERO,
     };
     let mut position_query = <(&Rocket, &NewtonBody)>::query();
-
     let (rocket, body) = position_query.iter(world).last().unwrap();
+    let mut obj_query = <(&CelestialBody, &NewtonBody)>::query();
 
-    let (tex, padded) = get_space_rect(window_size.0.x, window_size.0.y);
-    println!("{:?}|{:?}", tex, padded);
     {
         let mut intermediate_texture = canvas_resources
             .texture_creator
             .create_texture(
                 None, // Use default pixel format, or specify one like PixelFormatEnum::RGBA8888
                 TextureAccess::Target,
-                tex.width(),  // Width
-                tex.height(), // Height
+                tex.width(),
+                tex.height(),
             )
             .unwrap();
+        let _ = canvas_resources
+            .canvas
+            .with_texture_canvas(&mut intermediate_texture, |c| {
+                render_rocket(c, &srt_mtx, rocket, body);
+                for (c_body, body) in obj_query.iter(world) {
+                    render_celestial_body(c, &srt_mtx, scale, c_body, body)
+                }
+            });
 
-        render_rocket_(
-            &mut canvas_resources.canvas,
-            &mut intermediate_texture,
-            &t_mtx,
-            rocket,
-            body,
-        );
-        canvas_resources
+        let _ = canvas_resources
             .canvas
             .copy(&intermediate_texture, None, Some(padded));
-    }
-
-    let mut obj_query = <(&CelestialBody, &NewtonBody)>::query();
-    for (c_body, body) in obj_query.iter(world) {
-        //   render_celestial_body(&mut canvas_resources.canvas, &scale, padding, c_body, body)
     }
 
     render_ui(
@@ -101,76 +92,57 @@ pub fn render(
     canvas_resources.canvas.present();
 }
 
-fn render_rocket_(
-    canvas: &mut Canvas<Window>,
-    texture: &mut Texture,
-    r_mtx: &DMat3,
-    _: &Rocket,
-    n_body: &NewtonBody,
-) {
+fn render_rocket(canvas: &mut Canvas<Window>, srt_mtx: &DMat3, _: &Rocket, n_body: &NewtonBody) {
     #[inline]
-    fn tranaslate(x: DVec2, a: DVec2, pos: DVec2) -> I16Vec2 {
+    fn tranaslate(x: &DVec2, a: DVec2, pos: DVec2) -> I16Vec2 {
         (x.rotate(a) + pos).as_i16vec2()
     }
-    let _ = canvas.with_texture_canvas(texture, |c| {
-        const L0: DVec2 = dvec2(-25.0, 0.0);
-        const L1: DVec2 = dvec2(0.0, -43.3013);
-        const L2: DVec2 = dvec2(25.0, 0.0);
-        let original_vector_homogeneous = DVec3::ONE.with_xy(n_body.pos);
-        let pos_s = r_mtx.mul_vec3(original_vector_homogeneous);
-        let r = pos_s.xy();
 
-        let p0_i16 = tranaslate(L0, n_body.angle, r);
-        let p1_i16 = tranaslate(L1, n_body.angle, r);
-        let p2_i16 = tranaslate(L2, n_body.angle, r);
-        let _ = c.filled_trigon(
-            p0_i16.x, p0_i16.y, p1_i16.x, p1_i16.y, p2_i16.x, p2_i16.y, COLOR,
-        );
-        let _ = c.line(p2_i16.x, p2_i16.y, p0_i16.x, p0_i16.y, Color::RED);
-    });
-}
-
-fn render_rocket(
-    canvas: &mut Canvas<Window>,
-    scale: &SpaceScale,
-    padding: &SpacePadding,
-    _: &Rocket,
-    n_body: &NewtonBody,
-) {
-    let pos_s = n_body.pos * scale.0;
-
-    #[inline]
-    fn tranaslate(padding: &SpacePadding, x: DVec2, a: DVec2, pos: DVec2) -> I16Vec2 {
-        (x.rotate(a) + pos).as_i16vec2() + padding.0
-    }
-    const L0: DVec2 = dvec2(-25.0, 0.0);
-    let p0_i16 = tranaslate(padding, L0, n_body.angle, pos_s);
-
-    const L1: DVec2 = dvec2(0.0, -43.3013);
-    let p1_i16 = tranaslate(padding, L1, n_body.angle, pos_s);
-
-    const L2: DVec2 = dvec2(25.0, 0.0);
-    let p2_i16 = tranaslate(padding, L2, n_body.angle, pos_s);
+    let n_body_applied = srt_applied(srt_mtx, n_body.pos);
+    let poits: Vec<_> = [dvec2(-25.0, 0.0), dvec2(0.0, -43.3013), dvec2(25.0, 0.0)]
+        .iter()
+        .map(|p| tranaslate(p, n_body.angle, n_body_applied))
+        .collect();
 
     let _ = canvas.filled_trigon(
-        p0_i16.x, p0_i16.y, p1_i16.x, p1_i16.y, p2_i16.x, p2_i16.y, COLOR,
+        poits[0].x, poits[0].y, poits[1].x, poits[1].y, poits[2].x, poits[2].y, COLOR,
     );
-    let _ = canvas.line(p2_i16.x, p2_i16.y, p0_i16.x, p0_i16.y, Color::RED);
+    let _ = canvas.line(poits[2].x, poits[2].y, poits[0].x, poits[0].y, Color::RED);
+}
+
+fn srt_applied(srt_mtx: &DMat3, a: DVec2) -> DVec2 {
+    let as_dvec3 = DVec3::ONE.with_xy(a);
+    let applied = srt_mtx.mul_vec3(as_dvec3);
+    applied.xy()
 }
 
 fn render_celestial_body(
     canvas: &mut Canvas<Window>,
-    scale: &SpaceScale,
-    padding: &SpacePadding,
+    srt_mtx: &DMat3,
+    scale: f64,
     c_body: &CelestialBody,
     n_body: &NewtonBody,
 ) {
-    let pos_scaled = scale.s_dvec2(n_body.pos);
-    let r_scaled = scale.s_f64(c_body.radius);
-    let s = pos_scaled.as_i16vec2() + padding.0;
-    let lnn = dvec2(0.0, r_scaled).rotate(n_body.angle).as_i16vec2() + s;
-    let _ = canvas.circle(s.x, s.y, r_scaled as i16, c_body.color);
-    let _ = canvas.line(s.x, s.y, lnn.x, lnn.y, c_body.color);
+    let n_body_applied = srt_applied(srt_mtx, n_body.pos).as_i16vec2();
+    let radius_applied = c_body.radius * scale;
+    let pointer = DVec2::ZERO
+        .with_y(radius_applied)
+        .rotate(n_body.angle)
+        .as_i16vec2()
+        + n_body_applied;
+    let _ = canvas.circle(
+        n_body_applied.x,
+        n_body_applied.y,
+        radius_applied as i16,
+        c_body.color,
+    );
+    let _ = canvas.line(
+        n_body_applied.x,
+        n_body_applied.y,
+        pointer.x,
+        pointer.y,
+        c_body.color,
+    );
 }
 
 fn render_ui(
@@ -218,38 +190,19 @@ fn get_space_rect(x: i32, y: i32) -> (Rect, Rect) {
     }
     match x.cmp(&y) {
         Ordering::Greater => {
-            let r = x as u32;
+            let r = y as u32;
             let rr = Rect::new(0, 0, r, r);
             (rr, rr.right_shifted(padding(x, y)))
         }
         Ordering::Less => {
-            let r = y as u32;
+            let r = x as u32;
             let rr = Rect::new(0, 0, r, r);
             (rr, rr.bottom_shifted(padding(y, x)))
         }
         _ => {
-            let r = y as u32;
+            let r = x as u32;
             let rr = Rect::new(0, 0, r, r);
             (rr, rr)
         }
-    }
-}
-fn get_scaling(x: i32, y: i32) -> (f64, I16Vec2) {
-    let x_f = x as f64;
-    let y_f = y as f64;
-    #[inline]
-    fn padding(a: f64, b: f64) -> i16 {
-        ((a - b) * 0.5) as i16
-    }
-    match x.cmp(&y) {
-        Ordering::Greater => (y_f / SPACE_SIZE, {
-            let x = padding(x_f, y_f);
-            I16Vec2 { x, y: 0 }
-        }),
-        Ordering::Less => (x_f / SPACE_SIZE, {
-            let y = padding(y_f, x_f);
-            I16Vec2 { x: 0, y }
-        }),
-        _ => (x_f / SPACE_SIZE, I16Vec2::ZERO),
     }
 }
