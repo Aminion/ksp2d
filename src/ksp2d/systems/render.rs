@@ -12,7 +12,10 @@ use sdl2::{
 
 use crate::{
     ksp2d::{
-        components::{celestial_body::CelestialBody, newton_body::NewtonBody, rocket::Rocket},
+        components::{
+            celestial_body::CelestialBody, closest_celestial_body::ClosestCelestialBody,
+            newton_body::NewtonBody, rocket::Rocket,
+        },
         systems::performance_info::PerformanceInfo,
     },
     CameraMode, CanvasResources, FontRenderer, FrameDuration, FrameTimer, WindowSize, SPACE_SIZE,
@@ -25,6 +28,8 @@ const COLOR: Color = Color::CYAN;
 #[read_component(Rocket)]
 #[read_component(CelestialBody)]
 #[read_component(NewtonBody)]
+#[read_component(ClosestCelestialBody)]
+
 pub fn render(
     #[resource] canvas_resources: &mut CanvasResources,
     #[resource] font_renderer: &mut FontRenderer<1>,
@@ -41,6 +46,10 @@ pub fn render(
     let camera_mode = CameraMode::Default;
     let (tex, padded) = get_space_rect(window_size.0.x, window_size.0.y);
     let scale = tex.width() as f64 / SPACE_SIZE;
+    let mut position_query = <(&Rocket, &NewtonBody, &ClosestCelestialBody)>::query();
+    let (rocket, body, ccb) = position_query.iter(world).last().unwrap();
+    let closest_celestial = world.entry_ref(ccb.0).unwrap();
+    let newton_body_comp = closest_celestial.get_component::<NewtonBody>().unwrap();
     let srt_mtx = match camera_mode {
         CameraMode::Default => {
             let scale_mtx = DMat3::from_diagonal(DVec3::new(scale, scale, 1.0));
@@ -49,10 +58,20 @@ pub fn render(
             let mtx = scale_mtx * rotate_mtx * transform_mtx;
             mtx
         }
-        CameraMode::Landing => DMat3::ZERO,
+        CameraMode::Landing => {
+            let closest_celestial = world.entry_ref(ccb.0).unwrap();
+            let newton_body_comp = closest_celestial.get_component::<NewtonBody>().unwrap();
+            let dst = tex.width() as f64 / body.pos.distance(newton_body_comp.pos);
+            let scale_mtx = DMat3::from_scale(DVec2::splat(dst * 0.5));
+            let mid = scale_mtx.transform_point2(body.pos.midpoint(newton_body_comp.pos));
+            let mid2 = body.pos.midpoint(newton_body_comp.pos);
+            let rebase2 = DMat3::from_translation(-mid);
+            let rebase3 = DMat3::from_translation(DVec2::splat(tex.width() as f64 / 2.0));
+            let mtx = rebase3 * rebase2 * scale_mtx;
+            mtx
+        }
     };
-    let mut position_query = <(&Rocket, &NewtonBody)>::query();
-    let (rocket, body) = position_query.iter(world).last().unwrap();
+
     let mut obj_query = <(&CelestialBody, &NewtonBody)>::query();
 
     {
@@ -68,7 +87,7 @@ pub fn render(
         let _ = canvas_resources
             .canvas
             .with_texture_canvas(&mut intermediate_texture, |c| {
-                render_rocket(c, &srt_mtx, rocket, body);
+                render_rocket(c, &srt_mtx, rocket, body, newton_body_comp.pos);
                 for (c_body, body) in obj_query.iter(world) {
                     render_celestial_body(c, &srt_mtx, scale, c_body, body)
                 }
@@ -92,13 +111,19 @@ pub fn render(
     canvas_resources.canvas.present();
 }
 
-fn render_rocket(canvas: &mut Canvas<Window>, srt_mtx: &DMat3, _: &Rocket, n_body: &NewtonBody) {
+fn render_rocket(
+    canvas: &mut Canvas<Window>,
+    srt_mtx: &DMat3,
+    _: &Rocket,
+    n_body: &NewtonBody,
+    p: DVec2,
+) {
     #[inline]
     fn tranaslate(x: &DVec2, a: DVec2, pos: DVec2) -> I16Vec2 {
         (x.rotate(a) + pos).as_i16vec2()
     }
 
-    let n_body_applied = srt_applied(srt_mtx, n_body.pos);
+    let n_body_applied = srt_mtx.transform_point2(n_body.pos);
     let poits: Vec<_> = [dvec2(-25.0, 0.0), dvec2(0.0, -43.3013), dvec2(25.0, 0.0)]
         .iter()
         .map(|p| tranaslate(p, n_body.angle, n_body_applied))
@@ -108,12 +133,9 @@ fn render_rocket(canvas: &mut Canvas<Window>, srt_mtx: &DMat3, _: &Rocket, n_bod
         poits[0].x, poits[0].y, poits[1].x, poits[1].y, poits[2].x, poits[2].y, COLOR,
     );
     let _ = canvas.line(poits[2].x, poits[2].y, poits[0].x, poits[0].y, Color::RED);
-}
-
-fn srt_applied(srt_mtx: &DMat3, a: DVec2) -> DVec2 {
-    let as_dvec3 = DVec3::ONE.with_xy(a);
-    let applied = srt_mtx.mul_vec3(as_dvec3);
-    applied.xy()
+    let pp = srt_mtx.transform_point2(p).as_i16vec2();
+    let rr = n_body_applied.as_i16vec2();
+    let _ = canvas.line(rr.x, rr.y, pp.x, pp.y, Color::MAGENTA);
 }
 
 fn render_celestial_body(
@@ -123,7 +145,7 @@ fn render_celestial_body(
     c_body: &CelestialBody,
     n_body: &NewtonBody,
 ) {
-    let n_body_applied = srt_applied(srt_mtx, n_body.pos).as_i16vec2();
+    let n_body_applied = srt_mtx.transform_point2(n_body.pos).as_i16vec2();
     let radius_applied = c_body.radius * scale;
     let pointer = DVec2::ZERO
         .with_y(radius_applied)
