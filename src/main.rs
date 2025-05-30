@@ -146,7 +146,7 @@ fn initial_world() -> World {
     let first_celestial = world.extend(sys);
     let first_celestial_enity = *first_celestial.first().unwrap();
     world.push((
-        Rocket {},
+        Rocket::new(),
         rocket_body,
         ClosestCelestialBody(first_celestial_enity),
     ));

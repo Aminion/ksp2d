@@ -1,6 +1,6 @@
+use core::f64;
 use std::collections::HashSet;
 
-use glam::DVec2;
 use legion::*;
 
 use crate::{
@@ -12,7 +12,7 @@ use crate::{
 #[write_component(NewtonBody)]
 #[read_component(Rocket)]
 pub fn update_positions(
-    _rocket: &Rocket,
+    rocket: &mut Rocket,
     body: &mut NewtonBody,
     #[resource] dt: &Dt,
     #[resource] input: &HashSet<PlayerInput>,
@@ -28,20 +28,36 @@ pub fn update_positions(
 
     body.update_a(dt);
 
-    let mut d_f_local = DVec2::ZERO;
-
     if input.contains(&PlayerInput::MoveRight) {
-        d_f_local.x = TRUST;
-    } else if input.contains(&PlayerInput::MoveLeft) {
-        d_f_local.x = -TRUST;
-    }
-    if input.contains(&PlayerInput::MoveForward) {
-        d_f_local.y = -TRUST;
-    } else if input.contains(&PlayerInput::MoveBackward) {
-        d_f_local.y = TRUST;
+        rocket.engine_left.full();
+        rocket.engine_right.disable();
+    } else {
+        rocket.engine_left.disable();
     }
 
-    let d_f_global = body.angle.rotate(d_f_local);
+    if input.contains(&PlayerInput::MoveLeft) {
+        rocket.engine_right.full();
+        rocket.engine_left.disable();
+    } else {
+        rocket.engine_right.disable();
+    }
+
+    if input.contains(&PlayerInput::MoveForward) {
+        rocket.engine_averse.change_throttle(dt.0);
+    }
+
+    if input.contains(&PlayerInput::MoveBackward) {
+        if rocket.engine_averse.throttle != 0.0 {
+            rocket.engine_averse.change_throttle(-dt.0);
+        } else {
+            rocket.engine_reverse.full();
+        }
+    } else {
+        rocket.engine_reverse.disable();
+    }
+
+    let d_f_local = rocket.trust();
+    let d_f_global = (body.angle).rotate(d_f_local);
     let d_a = d_f_global / body.mass;
     let d_v = d_a * dt.0;
     let d_p = d_v * dt.0;
