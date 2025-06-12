@@ -36,6 +36,7 @@ use std::cmp::Ordering;
 use legion::*;
 
 use crate::ksp2d::components::rocket::PlayerInput;
+use crate::ksp2d::systems::flight_info::flight_info_system;
 
 pub struct Dt(f64);
 pub struct FrameTimer(Instant);
@@ -167,6 +168,7 @@ pub fn main() {
         .add_system(landing_system())
         .add_system(planet_resting_system())
         .add_system(closest_celestial_system())
+        .add_system(flight_info_system())
         .flush()
         .add_thread_local(render_system())
         .build();

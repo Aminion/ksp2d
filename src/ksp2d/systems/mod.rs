@@ -6,3 +6,4 @@ pub mod performance_info;
 pub mod planet_resting;
 pub mod render;
 pub mod rocket;
+pub mod flight_info;
