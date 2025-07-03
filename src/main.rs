@@ -30,30 +30,22 @@ use std::collections::HashSet;
 use std::time::{Duration, Instant};
 use system_generation::get_system;
 use systems::CommandBuffer;
+use uom::si::f32::Length;
+use uom::si::f64::Velocity;
+use uom::si::length::meter;
+use uom::si::velocity::meter_per_second;
 
 use std::cmp::Ordering;
 
 use legion::*;
 
+use crate::ksp2d::components::flight_info::FlightInfo;
 use crate::ksp2d::components::rocket::PlayerInput;
 use crate::ksp2d::systems::flight_info::flight_info_system;
 
 pub struct Dt(f64);
 pub struct FrameTimer(Instant);
 pub struct FrameDuration(Duration);
-pub struct SpaceScale(f64);
-
-pub struct SpacePadding(I16Vec2);
-
-impl SpaceScale {
-    fn s_f64(&self, x: f64) -> f64 {
-        x * self.0
-    }
-
-    fn s_dvec2(&self, x: DVec2) -> DVec2 {
-        x * self.0
-    }
-}
 
 pub struct WindowSize(IVec2);
 
@@ -150,6 +142,10 @@ fn initial_world() -> World {
         Rocket::new(),
         rocket_body,
         ClosestCelestialBody(first_celestial_enity),
+        FlightInfo {
+            delta: Velocity::new::<meter_per_second>(0.0),
+            distance: Length::new::<meter>(0.0),
+        },
     ));
     world
 }

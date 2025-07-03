@@ -1,6 +1,4 @@
-use std::cmp::Ordering;
-
-use glam::{dvec2, vec2, DMat3, DVec2, DVec3, I16Vec2, Vec3Swizzles};
+use glam::{dvec2, vec2, DMat3, DVec2, DVec3, I16Vec2};
 use legion::{world::SubWorld, *};
 use sdl2::{
     gfx::primitives::DrawRenderer,
@@ -9,12 +7,17 @@ use sdl2::{
     render::{Canvas, TextureAccess},
     video::Window,
 };
+use std::{cmp::Ordering, fmt::format};
+use uom::si::{f64::*, velocity::meter_per_second};
 
 use crate::{
     ksp2d::{
         components::{
-            celestial_body::CelestialBody, closest_celestial_body::ClosestCelestialBody,
-            newton_body::NewtonBody, rocket::Rocket,
+            celestial_body::CelestialBody,
+            closest_celestial_body::ClosestCelestialBody,
+            flight_info::{self, FlightInfo},
+            newton_body::NewtonBody,
+            rocket::Rocket,
         },
         systems::performance_info::PerformanceInfo,
     },
@@ -29,6 +32,7 @@ const COLOR: Color = Color::CYAN;
 #[read_component(CelestialBody)]
 #[read_component(NewtonBody)]
 #[read_component(ClosestCelestialBody)]
+#[write_component(FlightInfo)]
 
 pub fn render(
     #[resource] canvas_resources: &mut CanvasResources,
@@ -46,8 +50,8 @@ pub fn render(
     let camera_mode = CameraMode::Default;
     let (tex, padded) = get_space_rect(window_size.0.x, window_size.0.y);
     let scale = tex.width() as f64 / SPACE_SIZE;
-    let mut position_query = <(&Rocket, &NewtonBody, &ClosestCelestialBody)>::query();
-    let (rocket, body, ccb) = position_query.iter(world).last().unwrap();
+    let mut position_query = <(&Rocket, &NewtonBody, &ClosestCelestialBody, &FlightInfo)>::query();
+    let (rocket, body, ccb, flight_info) = position_query.iter(world).last().unwrap();
     let closest_celestial = world.entry_ref(ccb.0).unwrap();
     let newton_body_comp = closest_celestial.get_component::<NewtonBody>().unwrap();
     let srt_mtx = match camera_mode {
@@ -102,8 +106,7 @@ pub fn render(
         canvas_resources,
         window_size,
         font_renderer,
-        rocket,
-        body,
+        flight_info,
         performance_info,
     );
 
@@ -171,17 +174,18 @@ fn render_ui(
     canvas_resources: &mut CanvasResources,
     window_size: &WindowSize,
     font_renderer: &mut FontRenderer<1>,
-    _: &Rocket,
-    n_body: &NewtonBody,
+    flight_info: &FlightInfo,
     performance_info: &PerformanceInfo,
 ) {
     font_renderer
         .render_text(
             canvas_resources,
             &format!(
-                "SPEED    {}\nA.SPEED {}\nIN FLIGHT",
-                n_body.vel.length(),
-                n_body.angular_vel
+                "SPEED    {:.1}\nA.SPEED {}\nIN FLIGHT",
+                flight_info
+                    .delta
+                    .into_format_args(meter_per_second, uom::fmt::DisplayStyle::Abbreviation),
+                0.0
             ),
             vec2((window_size.0.x - 450) as f32, 0.0),
             16.0,
