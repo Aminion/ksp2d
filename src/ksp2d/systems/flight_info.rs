@@ -1,5 +1,9 @@
 use legion::{world::SubWorld, *};
-use uom::si::{f64::Velocity, velocity::meter_per_second};
+use uom::si::{
+    f64::{Length, Velocity},
+    length::meter,
+    velocity::meter_per_second,
+};
 
 use crate::ksp2d::components::{
     closest_celestial_body::ClosestCelestialBody, flight_info::FlightInfo, newton_body::NewtonBody,
@@ -15,4 +19,5 @@ pub fn flight_info(
     info: &mut FlightInfo,
 ) {
     info.delta = Velocity::new::<meter_per_second>(n_body.vel.length());
+    info.distance = Length::new::<meter>(n_body.pos.distance(ccb.closest_surface_point));
 }

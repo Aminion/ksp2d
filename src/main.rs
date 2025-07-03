@@ -30,8 +30,7 @@ use std::collections::HashSet;
 use std::time::{Duration, Instant};
 use system_generation::get_system;
 use systems::CommandBuffer;
-use uom::si::f32::Length;
-use uom::si::f64::Velocity;
+use uom::si::f64::{Length, Velocity};
 use uom::si::length::meter;
 use uom::si::velocity::meter_per_second;
 
@@ -141,7 +140,10 @@ fn initial_world() -> World {
     world.push((
         Rocket::new(),
         rocket_body,
-        ClosestCelestialBody(first_celestial_enity),
+        ClosestCelestialBody {
+            id: first_celestial_enity,
+            closest_surface_point: DVec2::ZERO,
+        },
         FlightInfo {
             delta: Velocity::new::<meter_per_second>(0.0),
             distance: Length::new::<meter>(0.0),

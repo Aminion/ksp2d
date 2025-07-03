@@ -20,10 +20,10 @@ pub fn landing(
     n_body: &NewtonBody,
     ccb: &ClosestCelestialBody,
 ) {
-    let closest_celestial = world.entry_ref(ccb.0).unwrap();
+    let closest_celestial = world.entry_ref(ccb.id).unwrap();
     let celestial_comp = closest_celestial.get_component::<CelestialBody>().unwrap();
     let newton_body_comp = closest_celestial.get_component::<NewtonBody>().unwrap();
     if celestial_comp.radius >= n_body.pos.distance(newton_body_comp.pos) {
-        command_buffer.add_component(*e, LandingRelation { planet_id: ccb.0 });
+        command_buffer.add_component(*e, LandingRelation { planet_id: ccb.id });
     }
 }

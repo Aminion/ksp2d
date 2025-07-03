@@ -7,17 +7,14 @@ use sdl2::{
     render::{Canvas, TextureAccess},
     video::Window,
 };
-use std::{cmp::Ordering, fmt::format};
-use uom::si::{f64::*, velocity::meter_per_second};
+use std::cmp::Ordering;
+use uom::si::{length::meter, velocity::meter_per_second};
 
 use crate::{
     ksp2d::{
         components::{
-            celestial_body::CelestialBody,
-            closest_celestial_body::ClosestCelestialBody,
-            flight_info::{self, FlightInfo},
-            newton_body::NewtonBody,
-            rocket::Rocket,
+            celestial_body::CelestialBody, closest_celestial_body::ClosestCelestialBody,
+            flight_info::FlightInfo, newton_body::NewtonBody, rocket::Rocket,
         },
         systems::performance_info::PerformanceInfo,
     },
@@ -52,7 +49,7 @@ pub fn render(
     let scale = tex.width() as f64 / SPACE_SIZE;
     let mut position_query = <(&Rocket, &NewtonBody, &ClosestCelestialBody, &FlightInfo)>::query();
     let (rocket, body, ccb, flight_info) = position_query.iter(world).last().unwrap();
-    let closest_celestial = world.entry_ref(ccb.0).unwrap();
+    let closest_celestial = world.entry_ref(ccb.id).unwrap();
     let newton_body_comp = closest_celestial.get_component::<NewtonBody>().unwrap();
     let srt_mtx = match camera_mode {
         CameraMode::Default => {
@@ -63,7 +60,7 @@ pub fn render(
             mtx
         }
         CameraMode::Landing => {
-            let closest_celestial = world.entry_ref(ccb.0).unwrap();
+            let closest_celestial = world.entry_ref(ccb.id).unwrap();
             let newton_body_comp = closest_celestial.get_component::<NewtonBody>().unwrap();
             let dst = tex.width() as f64 / body.pos.distance(newton_body_comp.pos);
             let scale_mtx = DMat3::from_scale(DVec2::splat(dst * 0.5));
@@ -181,11 +178,13 @@ fn render_ui(
         .render_text(
             canvas_resources,
             &format!(
-                "SPEED    {:.1}\nA.SPEED {}\nIN FLIGHT",
+                "SPEED       {:.1}\nDISTANCE {:.1}\nIN FLIGHT",
                 flight_info
                     .delta
                     .into_format_args(meter_per_second, uom::fmt::DisplayStyle::Abbreviation),
-                0.0
+                flight_info
+                    .distance
+                    .into_format_args(meter, uom::fmt::DisplayStyle::Abbreviation)
             ),
             vec2((window_size.0.x - 450) as f32, 0.0),
             16.0,
