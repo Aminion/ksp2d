@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use glam::{dvec2, DVec2};
+use glam::{dvec2, DMat3, DVec2};
 use legion::{world::SubWorld, *};
 
 use crate::ksp2d::components::{
@@ -20,8 +20,9 @@ pub fn planet_resting(world: &mut SubWorld) {
             let planet_entity = world.entry_ref(planet.planet_id).unwrap();
             let planet_n_body = planet_entity.get_component::<NewtonBody>().unwrap();
             let planet_celestial_body = planet_entity.get_component::<CelestialBody>().unwrap();
+            let a = DVec2::from_angle(planet_n_body.angle.to_angle() + planet.angle_position.to_angle());
             let rocket_pos_update = planet_n_body.pos
-                + dvec2(0.0, planet_celestial_body.radius).rotate(planet_n_body.angle);
+                + dvec2(0.0, planet_celestial_body.radius).rotate(a);
             (*rocket_id, (-planet_n_body.angle, rocket_pos_update))
         })
         .collect();

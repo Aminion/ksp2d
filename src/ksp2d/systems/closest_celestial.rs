@@ -1,4 +1,4 @@
-use glam::{DVec2, Vec2};
+use glam::DVec2;
 use legion::*;
 use world::SubWorld;
 
@@ -20,7 +20,7 @@ pub fn closest_celestial(world: &SubWorld, n_body: &NewtonBody, ccb: &mut Closes
     ccb.id = *p_id;
     let a = DVec2::Y
         .with_x(p_c_body.radius)
-        .rotate(n_body.pos.normalize())
-        + p_n_body.pos;
-    ccb.closest_surface_point = a;
+        .rotate(n_body.pos.normalize());
+    ccb.closest_surface_point = a + p_n_body.pos;
+    ccb.closest_surface_point_a = a.normalize();
 }

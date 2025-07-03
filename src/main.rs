@@ -143,6 +143,7 @@ fn initial_world() -> World {
         ClosestCelestialBody {
             id: first_celestial_enity,
             closest_surface_point: DVec2::ZERO,
+            closest_surface_point_a: DVec2::ZERO,
         },
         FlightInfo {
             delta: Velocity::new::<meter_per_second>(0.0),

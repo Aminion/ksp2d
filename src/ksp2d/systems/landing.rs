@@ -24,6 +24,6 @@ pub fn landing(
     let celestial_comp = closest_celestial.get_component::<CelestialBody>().unwrap();
     let newton_body_comp = closest_celestial.get_component::<NewtonBody>().unwrap();
     if celestial_comp.radius >= n_body.pos.distance(newton_body_comp.pos) {
-        command_buffer.add_component(*e, LandingRelation { planet_id: ccb.id });
+        command_buffer.add_component(*e, LandingRelation { planet_id: ccb.id, angle_position:ccb.closest_surface_point_a });
     }
 }
